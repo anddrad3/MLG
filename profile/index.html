@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Perfil de Amigo - MLG</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https="fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        :root{
+            --screen-bg: linear-gradient(135deg,#0a0a0b 0%,#1a1a1d 100%);
+            --page-bg:#16171a;
+            --card-bg:rgba(44,44,46,.8);
+            --card-hover:rgba(54,54,56,.9);
+            --input-bg:rgba(58,59,63,.6);
+            --text-primary:#f0f0f0;
+            --text-secondary:#a0a0a0;
+            --text-tertiary:#6e6e73;
+            --accent-blue:#0A84FF;
+            --success-color:#30d158;
+            --warning-color:#ff9f0a;
+            --error-color:#ff453a;
+            --delete-bg:#ff3b30;
+            --border-color:rgba(58,59,63,.3);
+            --shadow-light:rgba(0,0,0,.1);
+            --shadow-medium:rgba(0,0,0,.2);
+            --shadow-heavy:rgba(0,0,0,.4);
+            --blur-bg:rgba(22,23,26,.8);
+        }
+        *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+        html,body{height:100%;width:100%;overflow:hidden;background:var(--screen-bg);margin:0;padding:0}
+        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;color:var(--text-primary);}
+        #screen{width:100%;height:100%;background:var(--screen-bg);overflow:hidden;display:flex;flex-direction:column;position:relative}
+        .screen-page{width:100%;height:100%;flex-shrink:0;overflow-y:auto;padding:min(5vh,40px) clamp(16px,4vw,80px) min(10vh,80px);display:flex;flex-direction:column;align-items:center;scroll-behavior:smooth;}
+        .page-content-wrapper{width:100%;max-width:min(1200px,90vw);animation:fadeInUp .6s cubic-bezier(.23,1,.32,1)}
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+        .font-cursive { font-family: 'Dancing Script', cursive; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--text-tertiary); border-radius: 10px; border: 2px solid var(--page-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+        /* Profile Header */
+        .profile-header{display:flex;align-items:center;justify-content:space-between;gap:clamp(12px,2vw,20px);margin-bottom:clamp(32px,5vh,48px);padding:clamp(16px,3vw,24px);background:var(--card-bg);backdrop-filter:blur(20px);border-radius:clamp(16px,3vw,24px);width:100%;border:1px solid var(--border-color);box-shadow:0 8px 32px var(--shadow-light);}
+        .profile-picture-container{position:relative;width:clamp(56px,10vw,72px);height:clamp(56px,10vw,72px);flex-shrink:0;border-radius:50%;padding:3px;background:transparent;overflow:hidden}
+        .profile-picture-border{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from var(--angle),#8a2be2,#4169e1,#00ffff,#32cd32,#ffeb3b,#ff8c00,#ff4500,#8a2be2);padding:3px;mask:radial-gradient(farthest-side,transparent calc(100% - 3px),black calc(100% - 3px + 1px));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),black calc(100% - 3px + 1px));animation:rotateBorder 4s linear infinite;}
+        @property --angle{syntax:'<angle>';inherits:false;initial-value:0deg}
+        @keyframes rotateBorder{to{--angle:360deg}}
+        .profile-picture{position:relative;z-index:1;width:100%;height:100%;border-radius:50%;object-fit:cover;border:3px solid var(--page-bg);background-color: var(--input-bg);}
+        .profile-info h2{font-size:clamp(1.1rem,3.5vw,1.6rem);font-weight:600;line-height:1.2;margin:0 0 4px 0}
+        .profile-info p{font-size:clamp(.8rem,2.5vw, .9rem);color:var(--text-secondary);margin:0;font-weight:400}
+        .profile-stats{display:flex;flex-direction:column;align-items:flex-end;gap:clamp(6px,1.5vw,10px);font-size:clamp(.85rem,2.5vw,1rem);font-weight:500;flex-shrink:0}
+        .stat-item{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:12px;background:rgba(255,255,255,.05);backdrop-filter:blur(10px);}
+        #datetime-weather-container{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px; margin-left:-280px;}
+        #time-display { font-size: clamp(1.8rem, 4vw, 2.5rem); line-height: 1; }
+        #date-display { font-size: clamp(0.9rem, 2vw, 1.1rem); color: var(--text-secondary); }
+
+        /* App Grid */
+        .app-grid{position:relative;display:grid;grid-template-columns:repeat(auto-fit, minmax(clamp(88px, 20vw, 140px), max-content));gap:clamp(14px,3vw,28px);justify-items:center;justify-content:center;width:fit-content;max-width:100%;margin-inline:auto;padding:8px;}
+        .app-icon{display:flex;flex-direction:column;align-items:center;gap:clamp(8px,2vw,14px);text-align:center;-webkit-user-select:none;user-select:none;padding:8px;border-radius:20px; position: relative;}
+        .app-icon-img{width:clamp(58px,15vw,84px);height:clamp(58px,15vw,84px);border-radius:clamp(16px,4vw,22px);display:flex;align-items:center;justify-content:center;background:var(--card-bg);box-shadow:0 4px 16px var(--shadow-light),0 8px 32px var(--shadow-medium),inset 0 1px 0 rgba(255,255,255,.1);border:1px solid var(--border-color);position:relative;overflow:hidden}
+        .app-icon-img::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1) 0%,rgba(255,255,255,.05) 50%,rgba(0,0,0,.05) 100%);}
+        .app-icon-img.locked { cursor: not-allowed; }
+        .app-icon-img .lock-overlay { position: absolute; inset: 0; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; border-radius: inherit; }
+        .app-icon span{font-size:clamp(11px,2.2vw,14px);color:var(--text-primary);font-weight:500;line-height:1.2;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+        /* Modal Base */
+        .modal-base{opacity:0;pointer-events:none;transition:opacity .3s cubic-bezier(.4,0,.2,1)}
+        .modal-base-content{transform:scale(.95);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+        .modal-base.visible{opacity:1;pointer-events:auto}
+        .modal-base.visible .modal-base-content{transform:scale(1)}
+        .modal-action-btn{flex-grow:1;padding:10px 16px;border-radius:12px;font-weight:600;transition:all .2s ease;border:none;cursor:pointer; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .modal-action-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px var(--shadow-medium)}
+
+        /* Utility Apps */
+        .utility-app-icon { display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:20px; transition:all .2s ease; user-select:none; }
+        .utility-app-icon:hover { transform: translateY(-3px); background: var(--card-hover); }
+        .utility-app-icon .icon-wrapper { width:64px; height:64px; border-radius:18px; display:flex; align-items:center; justify-content:center; border: 1px solid var(--border-color); background: var(--card-bg); }
+        .utility-app-icon span { font-size:13px; font-weight:500; color:var(--text-secondary); }
+
+        @media (max-width:559px){
+            .app-grid{grid-template-columns:repeat(auto-fill, minmax(84px, 1fr));width:100%;}
+            .profile-header{flex-direction:column;text-align:center;gap:14px;align-items:center}
+            .profile-stats{flex-direction:row;justify-content:center;margin-left:0}
+            #datetime-weather-container{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;margin-inline:auto;}
+        }
+        @media (max-width:480px){
+            .screen-page{padding:clamp(14px,4vh,20px) 14px clamp(56px,10vh,72px)}
+            .app-grid{grid-template-columns:repeat(auto-fill, minmax(78px, 1fr));}
+            #datetime-weather-container{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px; margin-inline:auto;}
+        }
+        @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}.profile-picture-border{animation:none}}
+    </style>
+</head>
+<body>
+
+<div id="screen">
+    <div id="home-screen" class="screen-page">
+        <p class="w-full flex justify-center items-center pt-4 mb-4 md:mb-6 font-cursive text-8xl text-[var(--text-primary)]">MLG</p>
+        <div class="page-content-wrapper">
+            <div id="app-grid" class="app-grid"></div>
+            <hr class="w-full max-w-xs mx-auto border-[var(--border-color)] my-6 md:my-8">
+            <div id="friend-utility-grid" class="app-grid" style="grid-template-columns: repeat(3, minmax(80px, 1fr)); max-width: 400px;"></div>
+        </div>
+        <footer class="w-full flex justify-center items-center py-17 mt-auto">
+            <img src="../assets/logo.png" alt="MLG Logo" class="h-20">
+        </footer>
+    </div>
+</div>
+
+<div id="access-denied-modal" role="dialog" aria-modal="true" aria-hidden="true" class="modal-base fixed inset-0 z-[75] flex items-center justify-center p-4">
+    <div id="access-denied-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+    <div class="modal-base-content relative w-full max-w-xs p-6 bg-[var(--card-bg)] backdrop-blur-lg rounded-2xl shadow-xl border border-[var(--border-color)] text-center flex flex-col items-center">
+        <i data-lucide="lock" class="w-12 h-12 text-[var(--warning-color)] mb-4"></i>
+        <h2 class="text-lg font-bold text-[var(--text-primary)] mb-2">Acesso Restrito</h2>
+        <p class="text-[var(--text-secondary)] mb-6">Você não tem permissão para visualizar este conteúdo.</p>
+        <button id="access-denied-ok-btn" class="w-full modal-action-btn bg-[var(--accent-blue)] text-white">Entendi</button>
+    </div>
+</div>
+
+<div id="confirm-modal" role="dialog" aria-modal="true" aria-hidden="true" class="modal-base fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <div id="confirm-modal-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+    <div id="confirm-modal-content" class="modal-base-content relative w-full max-w-xs p-4 md:p-6 bg-[var(--card-bg)] backdrop-blur-lg rounded-2xl shadow-xl border border-[var(--border-color)] text-center">
+        <h2 id="confirm-modal-title" class="text-lg font-bold text-[var(--text-primary)] mb-2">Você tem certeza?</h2>
+        <p id="confirm-modal-text" class="text-[var(--text-secondary)] mb-6">Esta ação não pode ser desfeita.</p>
+        <div class="flex justify-center items-center gap-3 md:gap-4">
+            <button id="confirm-cancel-btn" class="modal-action-btn bg-[var(--input-bg)] text-[var(--text-primary)] border border-[var(--border-color)]"><i class="fa-solid fa-xmark"></i>Cancelar</button>
+            <button id="confirm-ok-btn" class="modal-action-btn delete-pic-btn"><i class="fa-solid fa-check"></i>Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const elements = {
+        pageContentWrapper: document.querySelector('.page-content-wrapper'),
+        appGrid: document.getElementById('app-grid'),
+        friendUtilityGrid: document.getElementById('friend-utility-grid'),
+        accessDeniedModal: document.getElementById('access-denied-modal'),
+        accessDeniedBackdrop: document.getElementById('access-denied-backdrop'),
+        accessDeniedOkBtn: document.getElementById('access-denied-ok-btn'),
+        confirmModal: document.getElementById('confirm-modal'),
+        confirmModalBackdrop: document.getElementById('confirm-modal-backdrop'),
+        confirmModalTitle: document.getElementById('confirm-modal-title'),
+        confirmModalText: document.getElementById('confirm-modal-text'),
+        confirmCancelBtn: document.getElementById('confirm-cancel-btn'),
+        confirmOkBtn: document.getElementById('confirm-ok-btn'),
+    };
+
+    const state = {
+        isFriend: true, // Change to `false` to test the "Adicionar Amigo" state
+        isBlocked: false,
+        confirmCallback: null
+    };
+
+    const friendProfile = {
+        name:'Beatriz Costa',
+        bio: 'Explorando o mundo, um pixel de cada vez.',
+        points: 4123,
+        rank:'Platina',
+        rankColor:'#e5e4e2',
+        profilePic:'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face&auto=format&q=80',
+        friendCount: 18,
+    };
+
+    const lockedApps = [
+        { id:'financeiro', name:'Financeiro', icon:'landmark', color:'#25D366' },
+        { id:'rotina', name:'Caderneta', icon:'notebook', color:'#007aff' },
+        { id:'metas', name:'Metas', icon:'mountain', color:'#ff9500' },
+        { id:'academia', name:'Academia', icon:'dumbbell', color:'#ff2d55' },
+        { id:'galeria', name:'Galeria', icon:'image', color:'#AF52DE' },
+        { id:'mensagens', name:'Mensagens', icon:'message-circle', color:'#5AC8FA' },
+    ];
+
+    const utils = {
+        formatNumber(n) { return new Intl.NumberFormat('pt-BR').format(n); }
+    };
+
+    const render = {
+        profileHeader() {
+            const headerHTML = `
+            <div class="profile-header">
+                <div class="flex items-center gap-4">
+                    <div class="profile-picture-container">
+                        <div class="profile-picture-border"></div>
+                        <img src="${friendProfile.profilePic}" alt="Foto de ${friendProfile.name}" class="profile-picture" loading="lazy">
+                    </div>
+                    <div class="profile-info">
+                        <h2>${friendProfile.name}</h2>
+                        <p>${friendProfile.bio}</p>
+                        <button class="locked-item flex items-center gap-1.5 text-xs mt-2 text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] transition-colors">
+                            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                            <span>${friendProfile.friendCount} amigos</span>
+                            <i data-lucide="lock" class="w-3.5 h-3.5 text-[var(--text-tertiary)] ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="datetime-weather-container">
+                    <div id="time-display" class="font-cursive"></div>
+                    <div id="date-display" class="font-cursive"></div>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item"><span>${utils.formatNumber(friendProfile.points)}</span><i data-lucide="gem" style="width:20px;height:20px;color:var(--accent-blue)"></i></div>
+                    <div class="stat-item"><span>${friendProfile.rank}</span><i data-lucide="shield-check" style="width:20px;height:20px;color:${friendProfile.rankColor}"></i></div>
+                    <button class="locked-item stat-item cursor-pointer">
+                        <span>Gráficos</span>
+                        <i data-lucide="lock" style="width:20px;height:20px;"></i>
+                    </button>
+                </div>
+            </div>`;
+            elements.pageContentWrapper.insertAdjacentHTML('afterbegin', headerHTML);
+        },
+
+        lockedApps() {
+            elements.appGrid.innerHTML = '';
+            const frag = document.createDocumentFragment();
+            lockedApps.forEach(app => {
+                const icon = this.createLockedAppIcon(app);
+                frag.appendChild(icon);
+            });
+            elements.appGrid.appendChild(frag);
+        },
+
+        createLockedAppIcon(app) {
+            const container = document.createElement('div');
+            container.className = 'app-icon locked-item';
+            container.setAttribute('role', 'button');
+            container.setAttribute('aria-label', `${app.name} (Bloqueado)`);
+            container.innerHTML = `
+                <div class="app-icon-img locked" style="background-color:${app.color}15;border-color:${app.color}30;">
+                    <i data-lucide="${app.icon}" style="color:${app.color};width:36px;height:36px;"></i>
+                    <div class="lock-overlay">
+                        <i data-lucide="lock" style="width:28px; height:28px; color:rgba(255,255,255,0.8);"></i>
+                    </div>
+                </div>
+                <span>${app.name}</span>`;
+            return container;
+        },
+
+        friendUtilityApps() {
+            elements.friendUtilityGrid.innerHTML = '';
+            const actions = [];
+
+            // 1. Add/Remove Friend Action
+            if (state.isFriend) {
+                actions.push({ id: 'remove-friend', name: 'Remover', icon: 'user-minus', color: 'var(--error-color)' });
+            } else {
+                actions.push({ id: 'add-friend', name: 'Adicionar', icon: 'user-plus', color: 'var(--accent-blue)' });
+            }
+
+            // 2. Block/Unblock Action
+            if (state.isBlocked) {
+                actions.push({ id: 'unblock-user', name: 'Desbloquear', icon: 'unlock', color: 'var(--warning-color)' });
+            } else {
+                 actions.push({ id: 'block-user', name: 'Bloquear', icon: 'ban', color: 'var(--warning-color)' });
+            }
+
+            // 3. Message Action
+            actions.push({ id: 'send-message', name: 'Mensagem', icon: 'send', color: '#5AC8FA' });
+
+            actions.forEach(action => {
+                const iconEl = document.createElement('div');
+                iconEl.id = action.id;
+                iconEl.className = 'utility-app-icon';
+                iconEl.innerHTML = `
+                    <div class="icon-wrapper">
+                        <i data-lucide="${action.icon}" style="color:${action.color}; width:28px; height:28px;"></i>
+                    </div>
+                    <span>${action.name}</span>
+                `;
+                elements.friendUtilityGrid.appendChild(iconEl);
+            });
+        }
+    };
+
+    const actions = {
+        updateDateTime() {
+            const now = new Date();
+            const timeEl = document.getElementById('time-display');
+            const dateEl = document.getElementById('date-display');
+            if(timeEl && dateEl) {
+                timeEl.textContent = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                dateEl.textContent = now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+        },
+
+        openAccessDeniedModal() {
+            elements.accessDeniedModal.classList.add('visible');
+            elements.accessDeniedModal.setAttribute('aria-hidden', 'false');
+            elements.accessDeniedOkBtn.focus();
+        },
+
+        closeAccessDeniedModal() {
+            elements.accessDeniedModal.classList.remove('visible');
+            elements.accessDeniedModal.setAttribute('aria-hidden', 'true');
+        },
+
+        showConfirm(title, message, onConfirm) {
+            elements.confirmModalTitle.textContent = title;
+            elements.confirmModalText.textContent = message;
+            state.confirmCallback = onConfirm;
+            elements.confirmModal.classList.add('visible');
+            elements.confirmModal.setAttribute('aria-hidden', 'false');
+            elements.confirmOkBtn.focus();
+        },
+
+        closeConfirmModal() {
+            elements.confirmModal.classList.remove('visible');
+            elements.confirmModal.setAttribute('aria-hidden', 'true');
+            state.confirmCallback = null;
+        },
+
+        addFriend() {
+            state.isFriend = true;
+            this.showToast(`Pedido de amizade enviado para ${friendProfile.name}!`, 'success');
+            render.friendUtilityApps();
+            setupUtilityButtonListeners(); // Re-attach listeners to new buttons
+        },
+
+        removeFriend() {
+            state.isFriend = false;
+            this.showToast(`${friendProfile.name} foi removido(a) da sua lista de amigos.`, 'info');
+            render.friendUtilityApps();
+            setupUtilityButtonListeners();
+        },
+
+        blockUser() {
+            state.isBlocked = true;
+            this.showToast(`${friendProfile.name} foi bloqueado(a).`, 'warning');
+            render.friendUtilityApps();
+            setupUtilityButtonListeners();
+        },
+
+        unblockUser() {
+            state.isBlocked = false;
+            this.showToast(`${friendProfile.name} foi desbloqueado(a).`, 'success');
+            render.friendUtilityApps();
+            setupUtilityButtonListeners();
+        },
+
+        showToast(message, type = 'info') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast fixed top-5 left-1/2 -translate-x-1/2 z-[1001] px-4 py-2 rounded-lg text-base font-medium shadow-lg transition-all duration-300 transform -translate-y-20 opacity-0`;
+            const colors = {
+                success: 'bg-[var(--success-color)] text-white',
+                error: 'bg-[var(--error-color)] text-white',
+                warning: 'bg-[var(--warning-color)] text-black',
+                info: 'bg-[var(--accent-blue)] text-white'
+            };
+            toast.className += ` ${colors[type] || colors.info}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+                toast.style.opacity = '1';
+            });
+
+            setTimeout(() => {
+                toast.style.transform = 'translateX(-50%) translateY(-20px)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    };
+
+    const setupEventListeners = () => {
+        // Listeners for locked items
+        document.body.addEventListener('click', (e) => {
+            if (e.target.closest('.locked-item')) {
+                actions.openAccessDeniedModal();
+            }
+        });
+
+        // Listeners for Modals
+        elements.accessDeniedOkBtn.addEventListener('click', actions.closeAccessDeniedModal);
+        elements.accessDeniedBackdrop.addEventListener('click', actions.closeAccessDeniedModal);
+
+        elements.confirmCancelBtn.addEventListener('click', actions.closeConfirmModal);
+        elements.confirmModalBackdrop.addEventListener('click', actions.closeConfirmModal);
+        elements.confirmOkBtn.addEventListener('click', () => {
+            if (typeof state.confirmCallback === 'function') {
+                state.confirmCallback();
+            }
+            actions.closeConfirmModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (elements.confirmModal.classList.contains('visible')) {
+                    actions.closeConfirmModal();
+                } else if (elements.accessDeniedModal.classList.contains('visible')) {
+                    actions.closeAccessDeniedModal();
+                }
+            }
+        });
+    };
+
+    // We need a separate function to attach listeners to utility buttons
+    // because they are re-rendered when state changes.
+    const setupUtilityButtonListeners = () => {
+        const addFriendBtn = document.getElementById('add-friend');
+        const removeFriendBtn = document.getElementById('remove-friend');
+        const blockUserBtn = document.getElementById('block-user');
+        const unblockUserBtn = document.getElementById('unblock-user');
+        const sendMessageBtn = document.getElementById('send-message');
+
+        if (addFriendBtn) addFriendBtn.addEventListener('click', () => actions.addFriend());
+        if (removeFriendBtn) removeFriendBtn.addEventListener('click', () => {
+            actions.showConfirm(
+                `Remover ${friendProfile.name}?`,
+                'Você terá que enviar um novo pedido de amizade para se conectar novamente.',
+                () => actions.removeFriend()
+            );
+        });
+        if (blockUserBtn) blockUserBtn.addEventListener('click', () => {
+            actions.showConfirm(
+                `Bloquear ${friendProfile.name}?`,
+                'Você não verá mais o perfil ou as mensagens desta pessoa.',
+                () => actions.blockUser()
+            );
+        });
+        if (unblockUserBtn) unblockUserBtn.addEventListener('click', () => actions.unblockUser());
+        if (sendMessageBtn) sendMessageBtn.addEventListener('click', () => actions.showToast('Funcionalidade de mensagens em breve!', 'info'));
+    };
+
+    const init = () => {
+        try {
+            render.profileHeader();
+            render.lockedApps();
+            render.friendUtilityApps();
+            setupEventListeners();
+            setupUtilityButtonListeners();
+            actions.updateDateTime();
+            setInterval(actions.updateDateTime, 1000);
+            lucide.createIcons();
+            console.log('🚀 Perfil de Amigo UI inicializado');
+        } catch (err) {
+            console.error('Erro na inicialização:', err);
+            actions.showToast('Erro ao carregar o perfil.', 'error');
+        }
+    };
+
+    init();
+});
+</script>
+</body>
+</html>

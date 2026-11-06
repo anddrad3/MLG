@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<!-- Adicionado `dark` para iniciar no tema escuro -->
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Cropper.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    <!-- Font Awesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script>
+        // Configuração do Tailwind para alternância de tema
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+
+<link rel="stylesheet" href="../assets/css/finance.css">
+<link rel="stylesheet" href="../assets/css/mlg.css">
+<script src="../assets/js/account.js" defer></script>
+<script src="../assets/js/domain.js"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen antialiased bg-white dark:bg-black">
+
+    <!-- Tela de PIN (Wrapper) -->
+    <div id="pin-wrapper" class="pin-screen transition-opacity duration-500">
+        <!-- Cartão de PIN -->
+        <div class="pin-screen-shell">
+        <main id="pin-container" class="pin-screen-card">
+            <h1 class="pin-screen-title">Acessar Financeiro</h1>
+            <!-- Indicador de PIN -->
+            <div id="pin-dots" class="flex justify-center space-x-4 mb-10" aria-label="Insira o PIN de 4 dígitos">
+                <div class="w-5 h-5 border-2 border-gray-700 rounded-full transition-all duration-300"></div>
+                <div class="w-5 h-5 border-2 border-gray-700 rounded-full transition-all duration-300"></div>
+                <div class="w-5 h-5 border-2 border-gray-700 rounded-full transition-all duration-300"></div>
+                <div class="w-5 h-5 border-2 border-gray-700 rounded-full transition-all duration-300"></div>
+            </div>
+            <!-- Teclado Numérico -->
+            <div id="keypad" class="grid grid-cols-3 gap-4" role="grid">
+                <button class="keypad-button" data-key="1" role="gridcell">1</button><button class="keypad-button" data-key="2" role="gridcell">2</button><button class="keypad-button" data-key="3" role="gridcell">3</button><button class="keypad-button" data-key="4" role="gridcell">4</button><button class="keypad-button" data-key="5" role="gridcell">5</button><button class="keypad-button" data-key="6" role="gridcell">6</button><button class="keypad-button" data-key="7" role="gridcell">7</button><button class="keypad-button" data-key="8" role="gridcell">8</button><button class="keypad-button" data-key="9" role="gridcell">9</button><div role="gridcell"></div><button class="keypad-button" data-key="0" role="gridcell">0</button><button class="keypad-button flex items-center justify-center bg-gray-800 hover:bg-gray-700 focus:bg-gray-700" data-key="backspace" aria-label="Limpar todos os dígitos" role="gridcell"><i class="fa-solid fa-eraser h-6 w-6"></i></button>
+            </div>
+        </main>
+        <!-- Mensagem de erro -->
+        <p id="error-message" class="pin-screen-error opacity-0">PIN incorreto.</p>
+        </div>
+    </div>
+
+    <!-- Anunciador para leitor de tela -->
+    <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- TELA PRINCIPAL DA APLICAÇÃO -->
+    <div id="main-app-container" class="w-full h-screen p-4 md:p-8 overflow-y-auto bg-transparent">
+        <!-- Conteúdo da Aplicação -->
+        <div class="w-full h-full relative z-10">
+            <!-- Header -->
+            <header class="sheet-panel scroll-morph-stage rounded-[1.75rem] p-4 md:p-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between mb-6">
+                <!-- Esquerda: Ações Principais -->
+                <div class="flex flex-wrap items-center justify-center gap-2 xl:justify-start">
+                    <button class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Voltar">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </button>
+                    <button id="settings-button" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Abrir configurações">
+                         <i class="fa-solid fa-gear h-6 w-6"></i>
+                    </button>
+                    <button id="theme-toggle-button" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Alternar tema claro e escuro">
+                        <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        <svg id="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    </button>
+                    <button id="toggle-visibility-button" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Ocultar dados financeiros">
+                        <svg id="icon-eye-open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        <svg id="icon-eye-slashed" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                    </button>
+                </div>
+
+                <!-- Centro: Seletor de Mês -->
+                <div class="flex flex-col items-center justify-center gap-3">
+                    <div class="app-brand">
+                        <p class="app-brand-title">Financeiro</p>
+                        <p class="app-brand-subtitle">Seu comando absoluto do dinheiro</p>
+                    </div>
+                    <div class="flex items-center justify-center gap-2 sm:gap-4">
+                        <button id="prev-month-button" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Mês anterior">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <h1 id="date-display" class="text-xl sm:text-3xl font-bold text-gray-900 dark:text-zinc-100 text-center whitespace-nowrap cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800 px-2 rounded-md transition-colors" aria-label="Selecionar Mês e Ano">Setembro 2025</h1>
+                        <button id="open-calendar-grid-btn" class="calendar-launch-button" type="button" aria-label="Abrir calendário de mês e ano">
+                            <i class="fa-regular fa-calendar"></i>
+                        </button>
+                        <button id="next-month-button" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Próximo mês">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Direita: Ferramentas -->
+                <div class="flex flex-wrap items-center justify-center gap-2 xl:justify-end">
+                    <button id="search-button" class="header-button hidden md:inline-flex text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Buscar registros">
+                        <i class="fa-solid fa-magnifying-glass h-5 w-5"></i>
+                    </button>
+                    <button id="timeline-button" class="header-button hidden md:inline-flex text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Abrir lista cronológica">
+                        <i class="fa-solid fa-clock-rotate-left h-5 w-5"></i>
+                    </button>
+                    <button id="analytics-button" class="header-button hidden md:inline-flex text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Abrir visão anual e gráficos">
+                        <i class="fa-solid fa-chart-column h-5 w-5"></i>
+                    </button>
+                    <button id="calculator-button" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Abrir calculadora">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                    </button>
+                    <button id="undo-action-button" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Desfazer última ação" title="Nada para desfazer" disabled>
+                        <i class="fa-solid fa-rotate-left h-5 w-5"></i>
+                    </button>
+                    <button id="toggle-edit-lock-button" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Bloquear edição">
+                        <svg id="icon-padlock-open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                        <svg id="icon-padlock-locked" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    </button>
+                    <button id="go-to-current-month-button" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Ir para mês atual">
+                        <i class="fa-solid fa-location-dot h-5 w-5"></i>
+                    </button>
+                    <a href="/" id="mlg-profile" aria-label="Perfil MLG"></a>
+                </div>
+            </header>
+<section class="mlg-ai" id="mlg-ai" aria-label="Assistente financeiro"></section>
+
+            <!-- Grid de Indicadores -->
+            <div id="indicators-grid" class="scroll-morph-stage flex flex-col md:grid md:grid-cols-4 gap-4 mb-6">
+                <!-- Entradas Previstas -->
+                <div class="indicator-card order-1 md:order-none bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-3 rounded-lg"><div class="flex items-center justify-between"><h3 class="text-sm font-medium text-gray-500 dark:text-zinc-400">Entradas Previstas</h3><button data-indicator="entradas" class="help-button p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Ajuda sobre Entradas Previstas"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button></div><p id="indicator-entradas" class="sensitive-data text-2xl font-bold text-green-600 dark:text-green-400 mt-1">R$ 0,00</p></div>
+                <!-- Despesas Previstas -->
+                <div class="indicator-card order-2 md:order-none bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-3 rounded-lg"><div class="flex items-center justify-between"><h3 class="text-sm font-medium text-gray-500 dark:text-zinc-400">Despesas Previstas</h3><button data-indicator="despesas" class="help-button p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Ajuda sobre Despesas Previstas"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button></div><p id="indicator-despesas" class="sensitive-data text-2xl font-bold text-red-600 dark:text-red-400 mt-1">R$ 0,00</p></div>
+                <!-- Pago no Mês -->
+                <div class="indicator-card order-3 md:order-none bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-3 rounded-lg"><div class="flex items-center justify-between"><h3 class="text-sm font-medium text-gray-500 dark:text-zinc-400">Pago no Mês</h3><button data-indicator="pago" class="help-button p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Ajuda sobre Pago no Mês"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button></div><p id="indicator-pago" class="sensitive-data text-2xl font-bold text-gray-700 dark:text-zinc-200 mt-1">R$ 0,00</p></div>
+                <!-- Quanto falta pagar -->
+                <div class="indicator-card order-4 md:order-none bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-3 rounded-lg"><div class="flex items-center justify-between"><h3 class="text-sm font-medium text-gray-500 dark:text-zinc-400">Quanto falta pagar</h3><button data-indicator="falta" class="help-button p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Ajuda sobre Quanto Falta Pagar"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button></div><p id="indicator-falta" class="sensitive-data text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">R$ 0,00</p></div>
+                 <!-- Falta para Pagar -->
+                <div id="indicator-falta-pagar-container" class="indicator-card order-5 md:order-none bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-3 rounded-lg">
+                    <div class="flex items-center justify-between"><h3 class="text-sm font-medium text-gray-500 dark:text-zinc-400">Falta para Pagar</h3><button data-indicator="falta-pagar" class="help-button p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Ajuda sobre Falta para Pagar"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button></div>
+                    <p id="indicator-falta-pagar" class="sensitive-data text-2xl font-bold text-gray-700 dark:text-zinc-200 mt-1">R$ 0,00</p>
+                </div>
+                <!-- Sobras -->
+                <div class="indicator-card order-6 md:order-none bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-3 rounded-lg"><div class="flex items-center justify-between"><h3 class="text-sm font-medium text-gray-500 dark:text-zinc-400">Sobras</h3><button data-indicator="sobras" class="help-button p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Ajuda sobre Sobras"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button></div><p id="indicator-sobras" class="sensitive-data text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">R$ 0,00</p></div>
+                <!-- Saldo no Cofre -->
+                <div class="indicator-card order-7 md:order-none bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-3 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors"><div class="flex items-center justify-between"><h3 class="text-sm font-medium text-gray-500 dark:text-zinc-400">Saldo no Cofre</h3><button data-indicator="cofre" class="help-button p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Ajuda sobre Saldo no Cofre"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button></div><p id="indicator-cofre" class="sensitive-data text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">R$ 0,00</p></div>
+                <!-- Alocado para Próx. Mês -->
+                <div class="indicator-card order-8 md:order-none bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-3 rounded-lg"><div class="flex items-center justify-between"><h3 class="text-sm font-medium text-gray-500 dark:text-zinc-400">Alocado</h3><button data-indicator="alocado" class="help-button p-1 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Ajuda sobre Alocado"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></button></div><p id="indicator-alocado" class="sensitive-data text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">R$ 0,00</p></div>
+            </div>
+
+            <!-- Colunas -->
+            <div class="scroll-morph-stage grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Coluna Entradas -->
+                <div class="sheet-panel sheet-panel-entradas p-4 rounded-[1.5rem] flex flex-col">
+                    <div class="sheet-panel-header">
+                        <div>
+                            <p class="sheet-panel-subtitle">Bloco Verde</p>
+                            <h2 class="sheet-panel-title">Entradas</h2>
+                        </div>
+                        <p class="sheet-panel-note">Todos os recebimentos, em uma lista contínua.</p>
+                    </div>
+                    <div id="entradas-list-container" class="flex-grow"></div>
+                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
+                        <div class="annotation-panel annotation-panel-entradas">
+                            <div class="annotation-header">
+                                <div>
+                                    <label for="entradas-anotacao" class="annotation-label">Anotações de Entradas</label>
+                                    <p class="annotation-helper">Guarde contexto do mês, recados e detalhes importantes. A caixa pode ser ampliada para baixo e para os lados.</p>
+                                </div>
+                                <span class="annotation-badge">Entradas</span>
+                            </div>
+                            <div class="annotation-shell">
+                                <textarea id="entradas-anotacao" rows="8" class="form-input annotation-textarea text-sm" placeholder="Escreva algo sobre as entradas deste mês..."></textarea>
+                            </div>
+                            <div class="annotation-footer">
+                                <p class="annotation-tip">Arraste o canto inferior direito para ajustar a largura e a altura da anotação.</p>
+                                <button id="salvar-anotacao-entradas" class="action-button annotation-save-button bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition">Salvar anotação</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Coluna Despesas -->
+                <div class="sheet-panel sheet-panel-despesas p-4 rounded-[1.5rem] flex flex-col">
+                    <div class="sheet-panel-header">
+                        <div>
+                            <p class="sheet-panel-subtitle">Bloco Vermelho</p>
+                            <h2 class="sheet-panel-title">Despesas</h2>
+                        </div>
+                        <p class="sheet-panel-note">Seus gastos e compromissos, sem perder nada de vista.</p>
+                    </div>
+                    <div class="sheet-panel-toolbar">
+                        <div class="sheet-panel-toolbar-group">
+                            <button id="select-all-expenses-btn" type="button" class="sheet-panel-toolbar-button">
+                                <i class="fa-solid fa-square-check"></i>
+                                <span>Pagar todas</span>
+                            </button>
+                            <button id="deselect-all-expenses-btn" type="button" class="sheet-panel-toolbar-button">
+                                <i class="fa-regular fa-square"></i>
+                                <span>Reabrir pagas</span>
+                            </button>
+                            <button id="simulation-mode-toggle-btn" type="button" class="sheet-panel-toolbar-button simulation-mode-toggle" aria-pressed="false">
+                                <i class="fa-solid fa-flask"></i>
+                                <span>Modo sandbox</span>
+                            </button>
+                        </div>
+                        <p class="sheet-panel-toolbar-note">A checkbox marca como <strong class="text-gray-800 dark:text-zinc-100">pago</strong>. A ampulheta amarela marca <strong class="text-gray-800 dark:text-zinc-100">ainda não</strong>. <strong class="text-gray-800 dark:text-zinc-100">Pendente</strong> fica como estado natural.</p>
+                    </div>
+                    <div id="simulation-banner" class="simulation-banner hidden">
+                        <div class="simulation-banner-shell">
+                            <div>
+                                <p class="simulation-banner-kicker">Sandbox</p>
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-zinc-100">Modo sandbox ativo</h3>
+                                <p id="simulation-banner-copy" class="simulation-banner-copy">Teste pagamentos, cofre, caixinhas e alocação para o próximo mês sem gravar de verdade. Ao encerrar, tudo volta exatamente ao estado anterior.</p>
+                            </div>
+                            <div class="simulation-banner-actions">
+                                <button id="simulation-open-cofre-btn" type="button" class="simulation-action-button hover-tooltip" data-tooltip="Abre o cofre para você simular retiradas, guardar valores e revisar as caixinhas.">
+                                    <i class="fa-solid fa-vault"></i>
+                                    <span>Abrir cofre</span>
+                                </button>
+                                <button id="simulation-new-caixinha-btn" type="button" class="simulation-action-button hover-tooltip" data-tooltip="Cria uma caixinha temporária dentro da sandbox para você testar cenários.">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>Nova caixinha</span>
+                                </button>
+                                <button id="simulation-pay-all-btn" type="button" class="simulation-action-button hover-tooltip" data-tooltip="Marca as despesas pendentes como pagas dentro da sandbox para testar o fechamento do mês.">
+                                    <i class="fa-solid fa-list-check"></i>
+                                    <span>Pagar tudo</span>
+                                </button>
+                                <button id="simulation-end-btn" type="button" class="simulation-action-button simulation-end hover-tooltip" data-tooltip="Encerra a sandbox e devolve imediatamente todo o dinheiro, alocações e caixinhas para o estado original.">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span>Encerrar sandbox</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="despesas-list-container" class="flex-grow"></div>
+                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
+                        <div class="annotation-panel annotation-panel-despesas">
+                            <div class="annotation-header">
+                                <div>
+                                    <label for="despesas-anotacao" class="annotation-label">Anotações de Despesas</label>
+                                    <p class="annotation-helper">Use este espaço para listar justificativas, alertas e lembretes sobre seus gastos do mês.</p>
+                                </div>
+                                <span class="annotation-badge">Despesas</span>
+                            </div>
+                            <div class="annotation-shell">
+                                <textarea id="despesas-anotacao" rows="8" class="form-input annotation-textarea text-sm" placeholder="Escreva algo sobre as despesas deste mês..."></textarea>
+                            </div>
+                            <div class="annotation-footer">
+                                <p class="annotation-tip">Se precisar de mais espaço, arraste a caixa para baixo ou para a lateral.</p>
+                                <button id="salvar-anotacao-despesas" class="action-button annotation-save-button bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition">Salvar anotação</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="scroll-morph-stage mt-6 sheet-panel p-4 rounded-[1.5rem]">
+                <div class="annotation-panel annotation-panel-geral">
+                    <div class="annotation-header">
+                        <div>
+                            <label for="geral-anotacao" class="annotation-label">Anotações Gerais</label>
+                            <p class="annotation-helper">Espaço amplo para o planejamento geral do mês. Aqui entram os resumos importados da sua planilha.</p>
+                        </div>
+                        <span class="annotation-badge">Geral</span>
+                    </div>
+                    <div class="annotation-shell">
+                        <textarea id="geral-anotacao" rows="14" class="form-input annotation-textarea text-sm" placeholder="Escreva aqui o resumo geral do mês, próximos passos e observações amplas..."></textarea>
+                    </div>
+                    <div class="annotation-footer">
+                        <p class="annotation-tip">Esta caixa ocupa a largura das duas colunas e foi pensada para os resumos mais longos do planejamento.</p>
+                        <button id="salvar-anotacao-geral" class="action-button annotation-save-button bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">Salvar anotação</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sobreposição de Bloqueio de Visibilidade -->
+        <div id="visibility-lock" class="absolute inset-0 z-20 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center transition-opacity duration-500 text-center p-4 pointer-events-none">
+             <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-emerald-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                <p class="mt-2 text-gray-200 font-medium">Dados protegidos</p><p class="text-sm text-gray-400">Clique em qualquer lugar para revelar.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAIS -->
+    <div id="secondary-pin-wrapper" class="pin-screen hidden">
+        <div class="pin-screen-shell">
+            <main id="secondary-pin-container" class="pin-screen-card">
+                <h1 id="secondary-pin-title" class="pin-screen-title"></h1>
+                <div id="secondary-pin-dots" class="pin-screen-dots" aria-label="Insira o PIN de 4 dígitos">
+                    <div class="w-5 h-5 border-2 border-gray-700 rounded-full transition-all duration-300"></div>
+                    <div class="w-5 h-5 border-2 border-gray-700 rounded-full transition-all duration-300"></div>
+                    <div class="w-5 h-5 border-2 border-gray-700 rounded-full transition-all duration-300"></div>
+                    <div class="w-5 h-5 border-2 border-gray-700 rounded-full transition-all duration-300"></div>
+                </div>
+                <div id="secondary-keypad" class="grid grid-cols-3 gap-4" role="grid">
+                    <button class="keypad-button" data-key="1" role="gridcell">1</button>
+                    <button class="keypad-button" data-key="2" role="gridcell">2</button>
+                    <button class="keypad-button" data-key="3" role="gridcell">3</button>
+                    <button class="keypad-button" data-key="4" role="gridcell">4</button>
+                    <button class="keypad-button" data-key="5" role="gridcell">5</button>
+                    <button class="keypad-button" data-key="6" role="gridcell">6</button>
+                    <button class="keypad-button" data-key="7" role="gridcell">7</button>
+                    <button class="keypad-button" data-key="8" role="gridcell">8</button>
+                    <button class="keypad-button" data-key="9" role="gridcell">9</button>
+                    <div role="gridcell"></div>
+                    <button class="keypad-button" data-key="0" role="gridcell">0</button>
+                    <button class="keypad-button flex items-center justify-center bg-gray-800 hover:bg-gray-700 focus:bg-gray-700" data-key="backspace" aria-label="Limpar todos os dígitos" role="gridcell">
+                        <i class="fa-solid fa-eraser h-6 w-6"></i>
+                    </button>
+                </div>
+            </main>
+            <p id="secondary-error-message" class="pin-screen-error opacity-0">PIN incorreto.</p>
+        </div>
+    </div>
+
+    <!-- Modal de Opções de Bloqueio -->
+    <div id="lock-options-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Opções de Bloqueio</h2>
+            <p class="text-gray-600 dark:text-zinc-400 mb-6">Selecione o que você deseja trancar:</p>
+            <div class="flex flex-col space-y-3">
+                <button data-lock-type="current" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">Somente a planilha atual</button>
+                <button data-lock-type="current-past" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">A atual e as pregressas</button>
+                <button data-lock-type="past" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">Somente as pregressas</button>
+                <button data-lock-type="current-future" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">A atual e as futuras</button>
+                <button data-lock-type="future" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">Somente as futuras</button>
+                <button id="lock-options-cancel-btn" class="mt-2 text-sm text-gray-500 dark:text-zinc-300 hover:underline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lock-management-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Gerenciar Bloqueio</h2>
+            <p class="text-gray-600 dark:text-zinc-400 mb-6">Existem outras planilhas travadas. Escolha se deseja bloquear mais ou desbloquear alguma faixa.</p>
+            <div class="flex flex-col space-y-3">
+                <button data-lock-manager-action="lock" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">Bloquear mais planilhas</button>
+                <button data-lock-manager-action="unlock" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">Desbloquear planilhas</button>
+                <button id="lock-management-cancel-btn" class="mt-2 text-sm text-gray-500 dark:text-zinc-300 hover:underline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Opções de Desbloqueio -->
+    <div id="unlock-options-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Opções de Desbloqueio</h2>
+            <p class="text-gray-600 dark:text-zinc-400 mb-6">Selecione o que você deseja destrancar:</p>
+            <div class="flex flex-col space-y-3">
+                <button data-unlock-type="current" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">Somente a planilha atual</button>
+                <button data-unlock-type="current-past" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">A atual e as pregressas</button>
+                <button data-unlock-type="past" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">Somente as pregressas</button>
+                <button data-unlock-type="current-future" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">A atual e as futuras</button>
+                <button data-unlock-type="future" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-100 font-semibold transition">Somente as futuras</button>
+                <button id="unlock-options-cancel-btn" class="mt-2 text-sm text-gray-500 dark:text-zinc-300 hover:underline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="confirm-lock-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4"><div class="bg-gray-100 dark:bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center"><h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Tem certeza que deseja trancar a planilha?</h2><p class="text-gray-600 dark:text-zinc-400 mb-6">Nenhuma alteração poderá ser feita enquanto estiver trancada.</p><div class="flex justify-center space-x-4"><button id="lock-cancelar-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button><button id="confirm-lock-button" class="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition">Confirmar</button></div></div></div>
+    <div id="date-picker-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4"><div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-xs text-center"><h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Selecione Mês e Ano</h2><div id="picker-highlight-area" class="relative flex justify-between items-center h-48 overflow-hidden mb-6"><div id="months-picker" class="picker-column w-1/2 h-full overflow-y-scroll"></div><div id="years-picker" class="picker-column w-1/2 h-full overflow-y-scroll"></div></div><div class="flex justify-center space-x-4"><button id="date-picker-cancelar-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button><button id="confirm-date-picker" class="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Confirmar</button></div></div></div>
+    <div id="calendar-grid-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="calendar-grid-modal bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl">
+            <div class="flex items-center justify-between gap-4 mb-6">
+                <button id="calendar-grid-prev-year" class="header-button text-gray-900 dark:text-zinc-100 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Ano anterior">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div class="text-center">
+                    <p class="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">Calend&aacute;rio r&aacute;pido</p>
+                    <button id="calendar-grid-year-trigger" type="button" class="calendar-grid-year-trigger" aria-controls="calendar-grid-years" aria-expanded="false" aria-label="Escolher ano">
+                        <span id="calendar-grid-year-label" class="text-2xl font-bold"></span>
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                </div>
+                <button id="calendar-grid-next-year" class="header-button text-gray-900 dark:text-zinc-100 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Proximo ano">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="calendar-grid-stage">
+                <div id="calendar-grid-months" class="calendar-grid-panel grid grid-cols-3 gap-3 sm:grid-cols-4"></div>
+                <div id="calendar-grid-years" class="calendar-grid-panel is-hidden grid grid-cols-3 gap-3 sm:grid-cols-4"></div>
+            </div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button id="calendar-grid-cancel-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Informação do Indicador -->
+    <div id="info-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4"><div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-md"><h2 id="info-modal-title" class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Título do Indicador</h2><div class="space-y-4 text-gray-700 dark:text-zinc-300"><p><strong class="font-semibold text-gray-800 dark:text-zinc-200">O que é:</strong> <span id="info-modal-desc"></span></p><p><strong class="font-semibold text-gray-800 dark:text-zinc-200">Como é calculado:</strong> <code id="info-modal-formula" class="text-sm bg-gray-200 dark:bg-zinc-800 rounded px-1 py-0.5"></code></p><p><strong class="font-semibold text-gray-800 dark:text-zinc-200">Exemplo:</strong> <span id="info-modal-example" class="text-sm italic"></span></p></div><div class="flex justify-end mt-6"><button id="close-info-modal" class="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Entendi</button></div></div></div>
+
+    <!-- Modal de Alerta "Falta para Pagar" -->
+    <div id="alert-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4"><div class="bg-red-100 dark:bg-zinc-900 dark:border dark:border-red-500/50 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center"><div class="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center mx-auto mb-4"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div><h2 class="text-xl font-bold mb-2 text-red-800 dark:text-red-200">Vai faltar dinheiro!</h2><p class="text-red-700 dark:text-red-300 mb-6">Suas despesas são maiores que suas entradas previstas. Planeje-se para cobrir a diferença.</p><div class="flex justify-center"><button id="close-alert-modal" class="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition">OK</button></div></div></div>
+
+    <!-- Modal Já está no Mês Atual -->
+    <div id="current-month-alert-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Aviso</h2>
+            <p class="text-gray-600 dark:text-zinc-400 mb-6">Você já se encontra no mês atual.</p>
+            <div class="flex justify-center">
+                <button id="close-current-month-alert-modal" class="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Janela da Calculadora Flutuante -->
+    <div id="calculator-window" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 rounded-2xl shadow-2xl bg-white/75 dark:bg-black/75 backdrop-blur-2xl border border-white/20 dark:border-zinc-800 hidden z-[80] overflow-hidden">
+        <header id="calculator-header" class="flex items-center justify-between p-2 md:cursor-move rounded-t-2xl">
+            <!-- Espaço vazio para alinhar o título -->
+            <div class="w-8"></div>
+            <h2 class="font-semibold text-sm text-gray-800 dark:text-zinc-200">Calculadora</h2>
+            <button id="close-calculator-button" class="header-button text-gray-900 dark:text-zinc-100 p-2 rounded-full hover:bg-white/20 dark:hover:bg-white/10" aria-label="Fechar calculadora">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </header>
+        <div class="p-4">
+            <div class="calculator-display-shell rounded-xl p-4 mb-4">
+                <div id="calculator-expression" class="calculator-expression text-right text-xs tracking-wide text-gray-600 dark:text-zinc-400 truncate">Digite uma operação</div>
+                <div id="calculator-display" class="w-full text-right text-4xl font-medium mt-2 truncate text-gray-900 dark:text-gray-50">0</div>
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+                <button class="calc-button bg-gray-300 dark:bg-zinc-700 hover:bg-gray-400 dark:hover:bg-zinc-600 col-span-2" data-key="clear">C</button>
+                <button class="calc-button bg-gray-300 dark:bg-zinc-700 hover:bg-gray-400 dark:hover:bg-zinc-600" data-key="backspace">←</button>
+                <button class="calc-button bg-emerald-500 hover:bg-emerald-600 text-white" data-key="/">÷</button>
+                <button class="calc-button" data-key="7">7</button><button class="calc-button" data-key="8">8</button><button class="calc-button" data-key="9">9</button>
+                <button class="calc-button bg-emerald-500 hover:bg-emerald-600 text-white" data-key="*">×</button>
+                <button class="calc-button" data-key="4">4</button><button class="calc-button" data-key="5">5</button><button class="calc-button" data-key="6">6</button>
+                <button class="calc-button bg-emerald-500 hover:bg-emerald-600 text-white" data-key="-">-</button>
+                <button class="calc-button" data-key="1">1</button><button class="calc-button" data-key="2">2</button><button class="calc-button" data-key="3">3</button>
+                <button class="calc-button bg-emerald-500 hover:bg-emerald-600 text-white" data-key="+">+</button>
+                <button class="calc-button col-span-2" data-key="0">0</button>
+                <button class="calc-button" data-key=".">.</button>
+                <button class="calc-button bg-emerald-500 hover:bg-emerald-600 text-white" data-key="=">=</button>
+            </div>
+            <div class="mt-4">
+                <button id="calculator-use-result-button" type="button" class="w-full px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Usar resultado como lançamento</button>
+            </div>
+            <div class="mt-4 pt-3 border-t border-white/30 dark:border-zinc-800/90">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                    <h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-gray-600 dark:text-zinc-400">Histórico</h3>
+                    <button id="clear-calculator-history-button" class="text-xs font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors" type="button">Limpar</button>
+                </div>
+                <div id="calculator-history" class="calculator-history-list max-h-36 overflow-y-auto space-y-2 pr-1">
+                    <p class="text-sm text-gray-500 dark:text-zinc-400">Nenhum cálculo ainda.</p>
+                </div>
+            </div>
+            <!-- Controles Mobile -->
+            <div id="calculator-mobile-controls" class="md:hidden flex justify-center space-x-2 mt-4">
+                <button data-corner="top-left" class="p-2 bg-gray-300 dark:bg-zinc-700 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 12.707a1 1 0 01-1.414 0L7 8.414V11a1 1 0 11-2 0V5a1 1 0 011-1h6a1 1 0 110 2H8.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg></button>
+                <button data-corner="top-right" class="p-2 bg-gray-300 dark:bg-zinc-700 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 12.707a1 1 0 010-1.414L11.586 7H9a1 1 0 110-2h6a1 1 0 011 1v6a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg></button>
+                <button data-corner="bottom-left" class="p-2 bg-gray-300 dark:bg-zinc-700 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 7.293a1 1 0 010 1.414L8.414 13H11a1 1 0 110 2H5a1 1 0 01-1-1V8a1 1 0 112 0v2.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg></button>
+                <button data-corner="bottom-right" class="p-2 bg-gray-300 dark:bg-zinc-700 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 7.293a1 1 0 011.414 0L13 11.586V9a1 1 0 112 0v6a1 1 0 01-1 1h-6a1 1 0 110-2h2.586L7.293 8.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="calculator-result-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="analytics-card w-full max-w-sm p-6 text-center">
+            <p class="text-xs uppercase tracking-[0.22em] text-gray-500 dark:text-zinc-400 mb-2">Calculadora</p>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Usar resultado</h2>
+            <p class="text-sm text-gray-600 dark:text-zinc-400 mt-2">Escolha se o valor calculado vai virar uma entrada ou uma despesa.</p>
+            <p id="calculator-result-modal-value" class="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mt-5 sensitive-data">R$ 0,00</p>
+            <div class="grid grid-cols-1 gap-3 mt-6">
+                <button data-result-type="entradas" class="px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Transformar em Entrada</button>
+                <button data-result-type="despesas" class="px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold transition">Transformar em Despesa</button>
+                <button id="calculator-result-cancel-btn" class="px-4 py-3 rounded-xl bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 font-semibold transition text-gray-800 dark:text-zinc-200">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Fluxo de Sobras -->
+    <div id="sobras-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-lg">
+            <div class="flex items-start justify-between gap-4 mb-4">
+                <div>
+                    <h2 id="sobras-modal-title" class="text-2xl font-bold mb-2 text-gray-900 dark:text-zinc-100">O que fazer com o valor que sobrou?</h2>
+                    <p class="text-gray-600 dark:text-zinc-400">Você tem <strong id="sobras-total-amount" class="text-emerald-600 dark:text-emerald-400">R$ 0,00</strong> para distribuir.</p>
+                </div>
+                <button id="open-sobras-help-modal-btn" type="button" class="px-3 py-2 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-sm font-semibold text-gray-700 dark:text-zinc-200 transition">Como funciona?</button>
+            </div>
+
+            <div class="space-y-4 mb-4">
+                <!-- Guardar no Cofre -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Guardar no Cofre</label>
+                    <div class="mt-1 flex rounded-md shadow-sm">
+                        <input type="number" id="sobras-cofre-input" class="form-input rounded-none rounded-l-md" placeholder="0.00">
+                        <select id="sobras-caixinha-select" class="form-input rounded-none border-l-0">
+                            <option value="">Selecione a caixinha</option>
+                        </select>
+                        <button id="sobras-nova-caixinha-btn" class="relative -ml-px inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-zinc-700 text-sm font-medium rounded-r-md text-gray-700 dark:text-zinc-300 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">+</button>
+                    </div>
+                    <p id="sobras-caixinha-error" class="text-xs text-red-500 h-4 mt-1"></p>
+                </div>
+                <!-- Alocar para Próx. Mês -->
+                <div>
+                    <label for="sobras-alocar-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Alocar para Próx. Mês</label>
+                    <input type="number" id="sobras-alocar-input" class="form-input mt-1" placeholder="0.00">
+                </div>
+                <!-- Gastar com diversos -->
+                <div>
+                    <label for="sobras-gastar-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Gastar com diversos</label>
+                    <input type="number" id="sobras-gastar-input" class="form-input mt-1" placeholder="0.00">
+                </div>
+            </div>
+
+             <!-- Atalhos e Validação -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
+                <div class="flex space-x-2">
+                    <button id="sobras-guardar-tudo" class="text-xs px-2 py-1 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900">Guardar tudo</button>
+                    <button id="sobras-alocar-tudo" class="text-xs px-2 py-1 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900">Alocar tudo</button>
+                    <button id="sobras-gastar-tudo" class="text-xs px-2 py-1 rounded bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300 hover:bg-pink-200 dark:hover:bg-pink-900">Gastar tudo</button>
+                </div>
+                <div class="text-sm font-medium">
+                    <span>Restante: </span>
+                    <span id="sobras-restante" class="text-gray-800 dark:text-zinc-200">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <button id="sobras-cancelar-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button>
+                <button id="sobras-confirmar-btn" class="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition disabled:opacity-50" disabled>Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sobras-help-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-lg">
+            <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Como funcionam as sobras</h2>
+            <div class="space-y-4 text-sm text-gray-700 dark:text-zinc-300">
+                <p><strong class="text-gray-900 dark:text-zinc-100">Guardar no cofre:</strong> move parte da sobra para uma caixinha e tira esse valor do uso diário.</p>
+                <p><strong class="text-gray-900 dark:text-zinc-100">Alocar para o próximo mês:</strong> adianta um valor para aparecer como reforço no mês seguinte.</p>
+                <p><strong class="text-gray-900 dark:text-zinc-100">Gastar com diversos:</strong> registra o valor no mês atual como ajuste manual do que sobrou.</p>
+                <p><strong class="text-gray-900 dark:text-zinc-100">Restante:</strong> precisa chegar a zero para confirmar, assim toda a sobra fica distribuída.</p>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button id="close-sobras-help-modal" class="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Excluir Caixinha -->
+    <div id="delete-caixinha-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-lg">
+            <h2 class="text-2xl font-bold mb-2 text-gray-900 dark:text-zinc-100">Excluir Caixinha</h2>
+            <p class="text-gray-600 dark:text-zinc-400 mb-4">O que fazer com <strong id="delete-caixinha-total-amount" class="text-emerald-600 dark:text-emerald-400">R$ 0,00</strong>?</p>
+
+            <div class="space-y-4 mb-4">
+                <!-- Transferir para outra caixinha -->
+                <div>
+                    <label for="delete-caixinha-transferir-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Transferir para outra caixinha</label>
+                    <div class="mt-1 flex rounded-md shadow-sm">
+                        <input type="text" inputmode="decimal" id="delete-caixinha-transferir-input" class="form-input rounded-none rounded-l-md" placeholder="0,00">
+                        <select id="delete-caixinha-transferir-select" class="form-input rounded-none border-l-0">
+                            <option value="">Selecione...</option>
+                        </select>
+                        <button id="delete-caixinha-nova-caixinha-btn" class="relative -ml-px inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-zinc-700 text-sm font-medium rounded-r-md text-gray-700 dark:text-zinc-300 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500">+</button>
+                    </div>
+                     <p id="delete-caixinha-transferir-error" class="text-xs text-red-500 h-4 mt-1"></p>
+                </div>
+                <!-- Alocar para Próx. Mês -->
+                <div>
+                    <label for="delete-caixinha-alocar-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Alocar para Próx. Mês</label>
+                    <input type="text" inputmode="decimal" id="delete-caixinha-alocar-input" class="form-input mt-1" placeholder="0,00">
+                </div>
+                <!-- Gastar com diversos -->
+                <div>
+                    <label for="delete-caixinha-gastar-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Gastar com diversos (será adicionado como entrada/despesa este mês)</label>
+                    <input type="text" inputmode="decimal" id="delete-caixinha-gastar-input" class="form-input mt-1" placeholder="0,00">
+                </div>
+            </div>
+
+             <!-- Atalhos e Validação -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-6">
+                <div class="flex space-x-2">
+                    <button id="delete-caixinha-transferir-tudo" class="text-xs px-2 py-1 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900">Transferir tudo</button>
+                    <button id="delete-caixinha-alocar-tudo" class="text-xs px-2 py-1 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900">Alocar tudo</button>
+                    <button id="delete-caixinha-gastar-tudo" class="text-xs px-2 py-1 rounded bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300 hover:bg-pink-200 dark:hover:bg-pink-900">Gastar tudo</button>
+                </div>
+                <div class="text-sm font-medium">
+                    <span>Restante: </span>
+                    <span id="delete-caixinha-restante" class="text-gray-800 dark:text-zinc-200">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <button id="delete-caixinha-cancelar-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button>
+                <button id="delete-caixinha-confirmar-btn" class="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition disabled:opacity-50" disabled>Confirmar Exclusão</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Visão do Cofre -->
+    <div id="cofre-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Meu Cofre</h2>
+                <button id="close-cofre-modal" class="modal-close-button p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Fechar cofre">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-800 dark:text-zinc-200" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            <div class="flex items-center space-x-2 mb-4">
+                <input id="show-only-dateless-checkbox" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                <label for="show-only-dateless-checkbox" class="text-sm text-gray-700 dark:text-zinc-300">Mostrar apenas caixinhas sem data</label>
+            </div>
+            <div id="caixinhas-summary-grid" class="caixinhas-summary-grid">
+                <div class="caixinha-summary-card">
+                    <p class="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">Total guardado</p>
+                    <p id="caixinhas-total-amount" class="text-2xl font-bold text-gray-900 dark:text-zinc-100 mt-2 sensitive-data">R$ 0,00</p>
+                </div>
+                <div class="caixinha-summary-card">
+                    <p class="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">Projeção 6 meses</p>
+                    <p id="caixinhas-projected-6m" class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-2 sensitive-data">R$ 0,00</p>
+                </div>
+                <div class="caixinha-summary-card">
+                    <p class="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">Ganho estimado 12 meses</p>
+                    <p id="caixinhas-projected-gain" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2 sensitive-data">R$ 0,00</p>
+                </div>
+            </div>
+            <div id="caixinhas-list-container" class="flex-grow overflow-y-auto pr-2 space-y-4">
+                <!-- Caixinhas serão renderizadas aqui -->
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="open-caixinha-editor-btn" class="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Criar Nova Caixinha</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Retirar do Cofre -->
+    <div id="retirar-cofre-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm">
+            <h2 id="retirar-cofre-title" class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Retirar do Cofre</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="retirar-valor-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Valor a retirar</label>
+                    <input type="number" id="retirar-valor-input" class="form-input mt-1" placeholder="0.00">
+                    <p id="retirar-max-info" class="text-xs text-gray-500 dark:text-zinc-400 mt-1">Disponível: R$ 0,00</p>
+                    <p id="retirar-error-message" class="text-xs text-red-500 h-4 mt-1"></p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button id="retirar-cancelar-btn" class="px-4 py-2 text-sm rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button>
+                <button id="retirar-confirmar-btn" class="px-4 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Confirmar Retirada</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editor de Caixinha -->
+    <div id="caixinha-editor-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-md">
+            <h2 id="caixinha-editor-title" class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Criar Nova Caixinha</h2>
+            <input type="hidden" id="caixinha-editor-id">
+            <div class="space-y-4">
+                <!-- Upload de Foto -->
+                <div class="flex flex-col items-center">
+                    <img id="caixinha-foto-preview" src="https://placehold.co/128x128/e2e8f0/64748b?text=Foto" class="w-32 h-32 rounded-full object-cover mb-2 border-4 border-gray-200 dark:border-zinc-700">
+                    <input type="file" id="caixinha-foto-input" class="hidden" accept="image/*">
+                    <label for="caixinha-foto-input" class="cursor-pointer text-sm font-medium text-emerald-600 hover:text-emerald-500">Escolher foto</label>
+                </div>
+                <!-- Nome -->
+                <div>
+                    <label for="caixinha-nome-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Nome da Caixinha (obrigatório)</label>
+                    <input type="text" id="caixinha-nome-input" class="form-input mt-1" placeholder="Ex: Viagem de Férias">
+                </div>
+                <!-- Datas -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="caixinha-inicio-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Data de Início (opcional)</label>
+                        <input type="date" id="caixinha-inicio-input" class="form-input mt-1">
+                    </div>
+                    <div>
+                        <label for="caixinha-termino-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Data de Término (opcional)</label>
+                        <input type="date" id="caixinha-termino-input" class="form-input mt-1">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-[1fr_180px] gap-4">
+                    <div>
+                        <label for="caixinha-juros-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Taxa de Juros (opcional)</label>
+                        <input type="number" id="caixinha-juros-input" class="form-input mt-1" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                    <div>
+                        <label for="caixinha-juros-tipo-select" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Periodicidade</label>
+                        <select id="caixinha-juros-tipo-select" class="form-input mt-1">
+                            <option value="none">Sem juros</option>
+                            <option value="monthly">Mensal</option>
+                            <option value="yearly">Anual</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-zinc-400">Se preencher a taxa, o cofre passa a mostrar quanto essa caixinha pode render em 3, 6 e 12 meses.</p>
+            </div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button id="caixinha-editor-cancelar-btn" class="px-4 py-2 text-sm rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button>
+                <button id="caixinha-editor-salvar-btn" class="px-4 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editor de Item (Entrada/Despesa) -->
+    <div id="item-editor-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div id="item-editor-card" class="item-editor-card">
+            <div class="item-editor-header">
+                <div class="item-editor-heading">
+                    <span class="item-editor-kind-badge">
+                        <i id="item-editor-kind-icon" class="fa-solid fa-arrow-trend-up"></i>
+                        <span id="item-editor-kind-badge-text">Entrada</span>
+                    </span>
+                    <div>
+                        <h2 id="item-editor-title" class="item-editor-title">Editar Item</h2>
+                        <p id="item-editor-subtitle" class="item-editor-subtitle">Preencha os dados principais e configure uma recorrência dinâmica sem depender de listas fixas.</p>
+                    </div>
+                </div>
+                <button id="close-item-editor-btn" type="button" class="item-editor-close-button" aria-label="Fechar editor de item">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <input type="hidden" id="item-editor-id">
+            <input type="hidden" id="item-editor-type">
+            <div class="item-editor-layout">
+                <div class="item-editor-media-panel">
+                    <div class="item-editor-preview">
+                        <img id="item-foto-preview" src="https://placehold.co/256x256/e2e8f0/64748b?text=?" alt="Pré-visualização da imagem do item">
+                    </div>
+                    <input type="file" id="item-foto-input" class="hidden" accept="image/png, image/jpeg, image/webp">
+                    <button id="item-foto-trigger" type="button" class="item-editor-upload-button" aria-label="Anexar imagem">
+                        <i class="fa-solid fa-paperclip"></i>
+                        <span>Anexar imagem</span>
+                    </button>
+                    <p class="item-editor-caption">Use uma imagem para identificar o lançamento mais rápido no mês.</p>
+                </div>
+                <div>
+                    <section class="item-editor-section">
+                        <h3 class="item-editor-section-title">Dados do lançamento</h3>
+                        <p class="item-editor-section-helper">Defina descrição, valor e a data-base que servirá para o cálculo das recorrências.</p>
+                        <div class="item-editor-fields">
+                            <div>
+                                <label for="item-nome-input" id="item-nome-label" class="item-editor-required-label block text-sm font-medium text-gray-700 dark:text-zinc-300">Descrição</label>
+                                <input type="text" id="item-nome-input" class="form-input mt-1" placeholder="Ex: Salário, aluguel, energia">
+                            </div>
+                            <div class="item-editor-inline-grid">
+                                <div>
+                                    <label for="item-valor-input" id="item-valor-label" class="item-editor-required-label block text-sm font-medium text-gray-700 dark:text-zinc-300">Valor</label>
+                                    <input type="text" inputmode="decimal" id="item-valor-input" class="form-input mt-1" placeholder="0,00">
+                                </div>
+                                <div>
+                                    <label for="item-date-trigger" id="item-data-label" class="item-editor-required-label block text-sm font-medium text-gray-700 dark:text-zinc-300">Data</label>
+                                    <input type="hidden" id="item-data-input">
+                                    <div id="item-date-shell" class="item-editor-date-shell mt-1">
+                                        <button id="item-date-trigger" type="button" class="item-editor-date-button" aria-label="Selecionar data do item">
+                                            <span id="item-date-display" class="item-editor-date-text is-placeholder">Selecione uma data</span>
+                                            <i class="fa-regular fa-calendar-days"></i>
+                                        </button>
+                                        <p id="item-date-helper" class="item-editor-date-helper">Escolha a data base para este lançamento.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <label class="item-editor-toggle">
+                                <input id="item-sem-data-checkbox" type="checkbox" class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="text-sm text-gray-900 dark:text-zinc-300">Sem data</span>
+                            </label>
+                        </div>
+                    </section>
+                    <section id="item-installments-section" class="item-editor-section">
+                        <h3 class="item-editor-section-title">Recorrência inteligente</h3>
+                        <p class="item-editor-section-helper">Monte a regra combinando tipo, intervalo e duração. Isso cobre parcelas, mensal, bimestral, trimestral, semestral, dia fixo, último dia útil e lançamentos por período sem data.</p>
+                        <div class="item-editor-fields">
+                            <div class="item-editor-inline-grid">
+                                <div>
+                                    <label for="item-recurrence-mode-select" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Como repetir</label>
+                                    <select id="item-recurrence-mode-select" class="form-input mt-1">
+                                        <option value="single">Lançamento único</option>
+                                        <option value="continuous">Repetir automaticamente</option>
+                                        <option value="limited">Encerrar após parcelas/ocorrências</option>
+                                    </select>
+                                </div>
+                                <div id="item-parcelas-wrapper" class="hidden">
+                                    <label for="item-parcelas-input" id="item-parcelas-label" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Qtd. de parcelas/ocorrências</label>
+                                    <input type="number" id="item-parcelas-input" class="form-input mt-1" placeholder="1" min="2" value="12">
+                                </div>
+                            </div>
+                            <div id="item-recurrence-config" class="space-y-4 hidden">
+                                <div class="item-editor-inline-grid">
+                                    <div>
+                                        <label for="item-periodicidade-select" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Base da periodicidade</label>
+                                        <select id="item-periodicidade-select" class="form-input mt-1">
+                                            <option value="monthly">Por mês</option>
+                                            <option value="days">Por dias</option>
+                                            <option value="business_day">Por dia útil do mês</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="item-periodicidade-interval-input" id="item-periodicidade-interval-label" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Intervalo</label>
+                                        <input type="number" id="item-periodicidade-interval-input" class="form-input mt-1" min="1" max="12" value="1">
+                                        <p id="item-periodicidade-interval-note" class="item-editor-inline-note mt-2">1 a 12 meses. Exemplos: mensal, bimestral, trimestral, quadrimestral, quinquimestral e anual.</p>
+                                    </div>
+                                </div>
+                                <div id="item-monthly-position-wrapper" class="item-editor-inline-grid hidden">
+                                    <div>
+                                        <label for="item-monthly-position-select" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Como posicionar no mês</label>
+                                        <select id="item-monthly-position-select" class="form-input mt-1">
+                                            <option value="anchor_date">Usar a data escolhida</option>
+                                            <option value="fixed_day">Usar um dia fixo do mês</option>
+                                            <option value="month_only">Sem dia fixo (fica sem data)</option>
+                                        </select>
+                                    </div>
+                                    <div id="item-fixed-day-wrapper" class="hidden">
+                                        <label for="item-fixed-day-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Qual dia do mês?</label>
+                                        <input type="number" id="item-fixed-day-input" class="form-input mt-1" min="1" max="31" value="7">
+                                    </div>
+                                </div>
+                                <div id="item-business-day-wrapper" class="item-editor-inline-grid hidden">
+                                    <div>
+                                        <label for="item-business-day-input" class="block text-sm font-medium text-gray-700 dark:text-zinc-300">Qual dia útil?</label>
+                                        <select id="item-business-day-input" class="form-input mt-1"></select>
+                                    </div>
+                                    <div class="item-editor-meta-box mt-0">
+                                        <span class="item-editor-meta-title">Data calculada</span>
+                                        <span id="item-business-day-preview" class="item-editor-meta-content">Selecione a regra para ver a data calculada automaticamente.</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Atalhos úteis</span>
+                                    <div id="item-periodicity-presets" class="item-editor-chip-list">
+                                        <button type="button" class="item-editor-chip" data-kind="monthly" data-interval="1">Mensal</button>
+                                        <button type="button" class="item-editor-chip" data-kind="monthly" data-interval="2">Bimestral</button>
+                                        <button type="button" class="item-editor-chip" data-kind="monthly" data-interval="3">Trimestral</button>
+                                        <button type="button" class="item-editor-chip" data-kind="monthly" data-interval="12">Anual</button>
+                                        <button type="button" class="item-editor-chip" data-kind="days" data-interval="7">Semanal</button>
+                                        <button type="button" class="item-editor-chip" data-kind="days" data-interval="15">15 dias</button>
+                                        <button type="button" class="item-editor-chip" data-kind="business_day" data-interval="1" data-business-day="5">5º dia útil</button>
+                                        <button type="button" class="item-editor-chip" data-kind="business_day" data-interval="1" data-business-day="-1">Último dia útil</button>
+                                    </div>
+                                </div>
+                                <div class="item-editor-meta-box">
+                                    <span class="item-editor-meta-title">Resumo automático</span>
+                                    <span id="item-recurrence-summary" class="item-editor-meta-content">Lançamento único. Nenhum mês futuro será criado automaticamente.</span>
+                                </div>
+                                <p id="item-recurrence-warning" class="item-editor-warning text-xs text-yellow-600 dark:text-yellow-400"></p>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="item-editor-footer">
+                        <button id="item-editor-cancelar-btn" class="px-4 py-2 text-sm rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button>
+                        <button id="item-editor-salvar-btn" class="item-editor-save-button px-4 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Salvar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="item-date-picker-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="item-date-picker-card">
+            <div class="item-date-picker-header">
+                <button id="item-date-picker-prev-btn" type="button" class="item-date-picker-nav" aria-label="Mês anterior">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div>
+                    <h3 id="item-date-picker-title" class="item-date-picker-title">Abril 2026</h3>
+                    <p class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1">Escolha a data base do lançamento</p>
+                </div>
+                <button id="item-date-picker-next-btn" type="button" class="item-date-picker-nav" aria-label="Próximo mês">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+            <div class="item-date-picker-weekdays">
+                <span class="item-date-picker-weekday">Dom</span>
+                <span class="item-date-picker-weekday">Seg</span>
+                <span class="item-date-picker-weekday">Ter</span>
+                <span class="item-date-picker-weekday">Qua</span>
+                <span class="item-date-picker-weekday">Qui</span>
+                <span class="item-date-picker-weekday">Sex</span>
+                <span class="item-date-picker-weekday">Sab</span>
+            </div>
+            <div id="item-date-picker-grid" class="item-date-picker-grid"></div>
+            <div class="item-date-picker-footer">
+                <button id="item-date-picker-today-btn" type="button" class="px-4 py-2 text-sm rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Hoje</button>
+                <button id="item-date-picker-clear-btn" type="button" class="px-4 py-2 text-sm rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Limpar</button>
+                <button id="item-date-picker-cancel-btn" type="button" class="px-4 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Descarte -->
+    <div id="confirm-discard-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Descartar alterações?</h2>
+            <p class="text-gray-600 dark:text-zinc-400 mb-6">Se fechar, as alterações não salvas serão perdidas.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="cancel-discard-btn" class="px-6 py-2 rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button>
+                <button id="confirm-discard-btn" class="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition">Descartar</button>
+            </div>
+        </div>
+    </div>
+    <div id="required-fields-modal" class="fixed inset-0 z-[95] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-red-50 dark:bg-zinc-950 dark:border dark:border-red-500/60 p-6 rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+                <div class="min-w-0">
+                    <h2 class="text-xl font-bold text-red-900 dark:text-red-200">Não dá para salvar sem os dados obrigatórios.</h2>
+                    <p class="text-sm text-red-800 dark:text-red-300 mt-2">Feche este aviso e preencha os campos marcados em vermelho com asterisco. O sistema só libera o salvamento quando as informações mínimas estiverem completas.</p>
+                </div>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button id="close-required-fields-modal-btn" class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal Cropper de Imagem -->
+    <div id="image-cropper-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-80 flex flex-col items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-lg">
+            <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Ajustar Imagem</h2>
+            <div id="cropper-image-container" class="mb-4 bg-black">
+                <img id="cropper-image" src="">
+            </div>
+            <div class="flex items-center space-x-4 mb-6">
+                <label for="zoom-slider" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Zoom</label>
+                <input id="zoom-slider" type="range" min="0" max="2" step="0.01" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-zinc-700">
+            </div>
+            <div class="flex justify-end space-x-4">
+                <button id="cropper-cancelar-btn" class="px-4 py-2 text-sm rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button>
+                <button id="cropper-salvar-btn" class="px-4 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Salvar Corte</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Visualizador de Imagem -->
+    <div id="image-viewer-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-90 flex items-center justify-center hidden p-4">
+        <img id="viewer-image" src="" class="max-w-full max-h-[90vh] object-contain rounded-lg">
+        <button id="close-viewer-btn" class="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white" aria-label="Fechar imagem">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Modal de Fundos Insuficientes -->
+    <div id="insufficient-funds-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-red-100 dark:bg-zinc-900 dark:border dark:border-red-500/50 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <div class="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold mb-2 text-red-800 dark:text-red-200">Não é possível pagar sem dinheiro.</h2>
+            <p id="insufficient-funds-description" class="text-red-700 dark:text-red-300 mb-2">O saldo disponível não é suficiente para esta despesa.</p>
+            <p id="insufficient-funds-shortfall" class="text-sm text-red-700/90 dark:text-red-300/90 mb-6"></p>
+            <div class="flex flex-col gap-3">
+                <button id="use-implicit-funds-btn" class="px-6 py-2 rounded-lg bg-white/90 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700 text-red-700 dark:text-red-200 font-semibold transition">As contas foram pagas com entradas que preferi não especificar</button>
+                <button id="close-insufficient-funds-modal" class="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition">Entendi</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="expense-status-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="analytics-card w-full max-w-xl p-6">
+            <div class="flex items-start justify-between gap-4 mb-5">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.22em] text-gray-500 dark:text-zinc-400">Despesa</p>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Escolher status</h2>
+                    <p id="expense-status-modal-item-name" class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Defina como essa conta deve aparecer agora.</p>
+                </div>
+                <button id="close-expense-status-modal-btn" class="modal-close-button p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800 text-gray-800 dark:text-zinc-200" aria-label="Fechar status da despesa">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="grid gap-3">
+                <button type="button" data-expense-status="paid" class="expense-status-option hover-tooltip" data-tooltip="Marca a despesa como realmente quitada agora e atualiza o total pago no mês.">
+                    <div>
+                        <p class="font-bold text-gray-900 dark:text-zinc-100">Pago</p>
+                        <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Conta realmente quitada agora. Entra no total de pago no mês e no histórico.</p>
+                    </div>
+                    <span class="expense-status-badge bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300">Pago</span>
+                </button>
+                <button type="button" data-expense-status="scheduled" class="expense-status-option hover-tooltip" data-tooltip="Você já tem o dinheiro separado, mas o dia do pagamento ainda não chegou.">
+                    <div>
+                        <p class="font-bold text-gray-900 dark:text-zinc-100">Ainda não</p>
+                        <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Mostra que o dinheiro existe, mas o vencimento ainda não chegou ou você só vai pagar depois.</p>
+                    </div>
+                    <span class="expense-status-badge bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-200">Ainda não</span>
+                </button>
+                <button type="button" data-expense-status="simulation" class="expense-status-option hover-tooltip" data-tooltip="Ativa uma sandbox temporária para testar pagamentos, cofre, novas caixinhas e alocação para o próximo mês sem gravar de verdade.">
+                    <div>
+                        <p class="font-bold text-gray-900 dark:text-zinc-100">Sandbox</p>
+                        <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Abre uma sandbox temporária para emular guardar no cofre, criar caixinhas, alocar para o próximo mês e pagar tudo.</p>
+                    </div>
+                    <span class="expense-status-badge bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">Sandbox</span>
+                </button>
+                <button type="button" data-expense-status="pending" class="expense-status-option hover-tooltip" data-tooltip="Remove o status especial e devolve a despesa ao estado pendente padrão.">
+                    <div>
+                        <p class="font-bold text-gray-900 dark:text-zinc-100">Pendente</p>
+                        <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Limpa o status especial e deixa a despesa apenas como pendente comum.</p>
+                    </div>
+                    <span class="expense-status-badge bg-gray-200 text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">Pendente</span>
+                </button>
+            </div>
+            <div class="flex justify-end mt-5">
+                <button id="expense-status-cancel-btn" class="px-5 py-2 rounded-lg bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 font-semibold text-gray-800 dark:text-zinc-200 transition">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Recorrência -->
+    <div id="edit-recurrence-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Editar Item Recorrente</h2>
+            <p class="text-gray-600 dark:text-zinc-400 mb-6">Como deseja aplicar as alterações?</p>
+            <div class="flex flex-col space-y-3">
+                <button id="edit-recurrence-this-only" class="w-full px-6 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Apenas nesta ocorrência</button>
+                <button id="edit-recurrence-this-and-future" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Nesta e nas futuras</button>
+                <button id="edit-recurrence-cancel-btn" class="mt-2 text-sm text-gray-500 dark:text-zinc-300 hover:underline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="delete-item-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center">
+            <h2 id="delete-item-modal-title" class="text-xl font-bold mb-4 text-gray-900 dark:text-zinc-100">Excluir lançamento</h2>
+            <p id="delete-item-modal-description" class="text-gray-600 dark:text-zinc-400 mb-6">Escolha como deseja excluir este lançamento.</p>
+            <div id="delete-item-modal-recurring-actions" class="flex flex-col space-y-3 hidden">
+                <button id="delete-item-this-only" class="w-full px-6 py-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition">Excluir só este mês</button>
+                <button id="delete-item-this-and-future" class="w-full px-6 py-3 rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Excluir este e os próximos</button>
+            </div>
+            <div id="delete-item-modal-single-actions" class="flex flex-col space-y-3 hidden">
+                <button id="delete-item-confirm-btn" class="w-full px-6 py-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition">Excluir lançamento</button>
+            </div>
+            <button id="delete-item-cancel-btn" class="mt-4 text-sm text-gray-500 dark:text-zinc-300 hover:underline">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="search-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="analytics-card w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="flex items-start justify-between gap-4 p-6 border-b border-gray-200 dark:border-zinc-800">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.22em] text-gray-500 dark:text-zinc-400">Busca</p>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Pesquisar em lancamentos e reservas</h2>
+                    <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Busque por nome, valor, mes, categoria e caixinha.</p>
+                </div>
+                <button id="close-search-modal-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800 text-gray-800 dark:text-zinc-200" aria-label="Fechar busca">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="p-6 flex flex-col gap-4 overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-[1fr_220px_180px] gap-3">
+                    <input type="text" id="global-search-input" class="form-input" placeholder="Ex: aluguel, salario, viagem, janeiro">
+                    <select id="global-search-filter" class="form-input">
+                        <option value="all">Tudo</option>
+                        <option value="entradas">Entradas</option>
+                        <option value="despesas">Despesas</option>
+                        <option value="caixinhas">Caixinhas</option>
+                    </select>
+                    <select id="global-search-year-filter" class="form-input">
+                        <option value="all">Todos os anos</option>
+                    </select>
+                </div>
+                <div id="global-search-results" class="overflow-y-auto pr-1 space-y-3 min-h-[16rem]"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="timeline-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="analytics-card w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="flex items-start justify-between gap-4 p-6 border-b border-gray-200 dark:border-zinc-800">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.22em] text-gray-500 dark:text-zinc-400">Ordem do mês</p>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Lista cronológica de entradas e saídas</h2>
+                    <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Veja a sequência do que entra, do que vence e também o histórico do que já foi pago.</p>
+                </div>
+                <button id="close-timeline-modal-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800 text-gray-800 dark:text-zinc-200" aria-label="Fechar lista cronológica">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="p-6 flex flex-col gap-4 overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <select id="timeline-period-filter" class="form-input">
+                        <option value="current-month">Mês aberto</option>
+                        <option value="current-year">Ano aberto</option>
+                        <option value="all">Todos os meses</option>
+                    </select>
+                    <select id="timeline-type-filter" class="form-input">
+                        <option value="all">Entradas e despesas</option>
+                        <option value="entradas">Só entradas</option>
+                        <option value="despesas">Só despesas</option>
+                    </select>
+                    <select id="timeline-mode-filter" class="form-input">
+                        <option value="agenda">Agenda cronológica</option>
+                        <option value="history">Histórico recente</option>
+                    </select>
+                </div>
+                <div id="timeline-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+                <div id="timeline-results" class="overflow-y-auto pr-1 space-y-3 min-h-[18rem]"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="analytics-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="analytics-card w-full max-w-6xl max-h-[92vh] overflow-y-auto">
+            <div class="flex items-start justify-between gap-4 p-6 border-b border-gray-200 dark:border-zinc-800">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.22em] text-gray-500 dark:text-zinc-400">Visao anual</p>
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-zinc-100">Graficos e todos os meses em uma tela</h2>
+                    <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Analise entradas, despesas, pagamentos, sobras e navegue por qualquer mes do ano atual ou de anos anteriores.</p>
+                </div>
+                <button id="close-analytics-modal-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800 text-gray-800 dark:text-zinc-200" aria-label="Fechar visão anual">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+                    <div class="inline-flex items-center gap-3">
+                        <button id="analytics-prev-year-btn" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Ano anterior">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.22em] text-gray-500 dark:text-zinc-400">Ano em foco</p>
+                            <p id="analytics-year-label" class="text-3xl font-bold text-gray-900 dark:text-zinc-100">2026</p>
+                        </div>
+                        <button id="analytics-next-year-btn" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Proximo ano">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+                        <p class="text-sm text-gray-600 dark:text-zinc-400 sm:max-w-xs">Clique em um mes abaixo para abrir a planilha correspondente. Nos graficos, voce pode alternar entre o ano inteiro ou um mes especifico.</p>
+                        <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+                            <label class="analytics-filter-shell">
+                                <span>Recorte</span>
+                                <select id="analytics-period-filter" class="form-input analytics-select">
+                                    <option value="all">Ano inteiro</option>
+                                    <option value="0">Janeiro</option>
+                                    <option value="1">Fevereiro</option>
+                                    <option value="2">Março</option>
+                                    <option value="3">Abril</option>
+                                    <option value="4">Maio</option>
+                                    <option value="5">Junho</option>
+                                    <option value="6">Julho</option>
+                                    <option value="7">Agosto</option>
+                                    <option value="8">Setembro</option>
+                                    <option value="9">Outubro</option>
+                                    <option value="10">Novembro</option>
+                                    <option value="11">Dezembro</option>
+                                </select>
+                            </label>
+                            <button id="download-analytics-report-btn" type="button" class="analytics-action-button">
+                                <i class="fa-solid fa-file-arrow-down"></i>
+                                <span>Baixar relatório detalhado</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="analytics-summary-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-[1.45fr_0.95fr] gap-6">
+                    <div class="analytics-card p-5">
+                        <div class="mb-4">
+                            <p id="analytics-primary-kicker" class="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">Grafico anual</p>
+                            <h3 id="analytics-primary-title" class="text-xl font-bold text-gray-900 dark:text-zinc-100">Entradas, despesas e sobras</h3>
+                        </div>
+                        <div class="h-80">
+                            <canvas id="analytics-year-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="analytics-card p-5">
+                        <div class="mb-4">
+                            <p id="analytics-secondary-kicker" class="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">Mes aberto</p>
+                            <h3 id="analytics-secondary-title" class="text-xl font-bold text-gray-900 dark:text-zinc-100">Pago, pendente e sobras</h3>
+                        </div>
+                        <div class="h-80">
+                            <canvas id="analytics-current-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="mb-4">
+                        <p id="analytics-grid-kicker" class="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">Todos os meses</p>
+                        <h3 id="analytics-grid-title" class="text-xl font-bold text-gray-900 dark:text-zinc-100">Panorama completo do ano</h3>
+                    </div>
+                    <div id="analytics-year-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div id="settings-modal" class="fixed inset-0 z-[80] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 p-6 rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Configurações</h2>
+                <button id="close-settings-modal" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-zinc-200" aria-label="Fechar configurações">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                 <button id="open-import-modal-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-5l-4-4m0 0l-4 4m4-4v12" /></svg><span class="text-gray-800 dark:text-zinc-200">Importar Planilha Excel</span></button>
+                 <button id="open-share-modal-btn" class="hidden w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3" aria-hidden="true" tabindex="-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg><span class="text-gray-800 dark:text-zinc-200">Compartilhar Planilha</span></button>
+                 <button id="open-trash-modal-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg><span class="text-gray-800 dark:text-zinc-200">Lixeira</span></button>
+                 <button id="open-search-modal-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><i class="fa-solid fa-magnifying-glass h-5 w-5 text-gray-500"></i><span class="text-gray-800 dark:text-zinc-200">Busca Global</span></button>
+                 <button id="open-timeline-modal-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><i class="fa-solid fa-clock-rotate-left h-5 w-5 text-gray-500"></i><span class="text-gray-800 dark:text-zinc-200">Lista Cronológica</span></button>
+                 <button id="open-analytics-modal-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><i class="fa-solid fa-chart-column h-5 w-5 text-gray-500"></i><span class="text-gray-800 dark:text-zinc-200">Painel Anual e Gráficos</span></button>
+                 <button id="export-family-andrade-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-8m0 8l-3-3m3 3l3-3M4 20h16" /></svg><span class="text-gray-800 dark:text-zinc-200">Exportar Excel no Modelo Andrade</span></button>
+                 <button id="download-pdf-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg><span class="text-gray-800 dark:text-zinc-200">Baixar PDF Detalhado</span></button>
+                 <button id="download-manual-pdf-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><i class="fa-solid fa-book-open h-5 w-5 text-gray-500"></i><span class="text-gray-800 dark:text-zinc-200">Manual completo em PDF</span></button>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="import-spreadsheet-input" class="hidden" accept=".xlsx,.xls,.csv">
+
+    <div id="import-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-start gap-4 mb-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Importar planilha Excel</h2>
+                    <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">O sistema tenta detectar automaticamente tipo, descrição, valor, data, mês/ano e status de pago.</p>
+                </div>
+                <button id="close-import-modal-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-zinc-200" aria-label="Fechar importação">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="space-y-4 overflow-y-auto pr-1">
+                <div class="rounded-xl bg-gray-200 dark:bg-zinc-800/80 p-4">
+                    <p class="text-sm font-semibold text-gray-800 dark:text-zinc-100">Colunas aceitas</p>
+                    <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Use combinações como <code class="text-xs bg-gray-300 dark:bg-zinc-700 px-1 py-0.5 rounded">tipo</code>, <code class="text-xs bg-gray-300 dark:bg-zinc-700 px-1 py-0.5 rounded">descrição</code>, <code class="text-xs bg-gray-300 dark:bg-zinc-700 px-1 py-0.5 rounded">valor</code>, <code class="text-xs bg-gray-300 dark:bg-zinc-700 px-1 py-0.5 rounded">data</code>, ou então <code class="text-xs bg-gray-300 dark:bg-zinc-700 px-1 py-0.5 rounded">mês</code> + <code class="text-xs bg-gray-300 dark:bg-zinc-700 px-1 py-0.5 rounded">ano</code>. Se a aba se chamar Entradas ou Despesas, isso também ajuda na detecção.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button id="select-import-file-btn" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Escolher planilha</button>
+                    <span id="import-file-name" class="text-sm text-gray-600 dark:text-zinc-400">Nenhum arquivo selecionado.</span>
+                </div>
+                <div id="import-summary-card" class="hidden rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 p-4">
+                    <p id="import-summary-text" class="text-sm text-emerald-800 dark:text-emerald-200"></p>
+                    <p id="import-summary-extra" class="text-xs text-emerald-700 dark:text-emerald-300 mt-2"></p>
+                </div>
+                <div id="import-warning-card" class="hidden rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 p-4">
+                    <p id="import-warning-text" class="text-sm text-amber-800 dark:text-amber-200"></p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-800 dark:text-zinc-100 mb-2">Prévia</h3>
+                    <div id="import-preview-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button id="import-cancel-btn" class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Cancelar</button>
+                <button id="import-confirm-btn" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition disabled:opacity-50" disabled>Importar dados</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal da Lixeira -->
+    <div id="trash-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+         <div class="bg-gray-100 dark:bg-zinc-950 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-3xl h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Lixeira</h2>
+                <button id="close-trash-modal-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Fechar lixeira">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+             <div class="flex items-center space-x-4 mb-4 p-2 bg-gray-200 dark:bg-zinc-900 rounded-md">
+                <label for="trash-filter-type" class="text-sm font-medium text-gray-700 dark:text-zinc-300">Filtrar por tipo:</label>
+                <select id="trash-filter-type" class="form-input text-sm py-1">
+                    <option value="all">Todos</option>
+                    <option value="entradas">Entradas</option>
+                    <option value="despesas">Despesas</option>
+                </select>
+                <label for="trash-filter-month" class="text-sm font-medium text-gray-700 dark:text-zinc-300">por Mês:</label>
+                <select id="trash-filter-month" class="form-input text-sm py-1">
+                    <option value="all">Todos</option>
+                </select>
+            </div>
+             <div id="trash-list-container" class="flex-grow overflow-y-auto pr-2 space-y-2"></div>
+             <div class="mt-6 flex justify-end space-x-3">
+                 <button id="download-trash-csv-btn" class="px-4 py-2 text-sm rounded-lg bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 font-semibold transition">Baixar CSV</button>
+                 <button id="download-trash-pdf-btn" class="px-4 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition">Baixar PDF</button>
+            </div>
+         </div>
+    </div>
+
+    <!-- Modal de Compartilhamento -->
+     <div id="share-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
+         <div class="bg-gray-100 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 rounded-2xl shadow-2xl w-full max-w-md h-[70vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-100">Compartilhar Planilha</h2>
+                <button id="close-share-modal-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700" aria-label="Fechar compartilhamento">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+             <input type="text" id="share-search-input" class="form-input mb-4" placeholder="Buscar usuário...">
+             <div id="share-users-list" class="flex-grow overflow-y-auto pr-2 space-y-2"></div>
+             <div class="mt-6 flex justify-end">
+                 <button id="share-confirm-btn" class="px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition disabled:opacity-50" disabled>Confirmar</button>
+             </div>
+         </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transform translate-y-2">
+        <p id="toast-message"></p>
+    </div>
+
+
+    <!-- Cropper.js JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script src="../assets/vendor/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <!-- jsPDF and autoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="../assets/js/finance.js"></script>
+<script src="../assets/js/assistant.js"></script>
+</body>
+</html>

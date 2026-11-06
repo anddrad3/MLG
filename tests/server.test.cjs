@@ -1,0 +1,19 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const {createServer}=require('../server/index.cjs');
+test('server protects secrets, requires authorization and validates upstream output',async t=>{
+  let calls=0;
+  const env={GEMINI_API_KEY:'TEST_ONLY_NOT_A_REAL_KEY',AI_ACCESS_TOKEN:'test-only-access-code-of-32-characters',PUBLIC_ORIGIN:'http://localhost'};
+  const upstream=async()=>{calls++;return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({type:'despesas',name:'Internet',amount:120,date:'2026-12-01',installments:1,amountMode:'total'})}]}}]})};};
+  const server=createServer(env,upstream);await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{server.closeAllConnections();server.close();});
+  const base=`http://127.0.0.1:${server.address().port}`;
+  const post=(route,data,cookie,origin='http://localhost')=>fetch(base+route,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,...(cookie?{Cookie:cookie}:{})},body:JSON.stringify(data)});
+  for(const route of ['/.env','/server/index.cjs','/package.json','/.git/config'])assert.equal((await fetch(base+route)).status,404);
+  assert.equal((await post('/api/command',{text:'x'})).status,401);
+  assert.equal((await post('/api/session',{accessCode:env.AI_ACCESS_TOKEN},null,'https://attacker.invalid')).status,403);
+  const login=await post('/api/session',{accessCode:env.AI_ACCESS_TOKEN});assert.equal(login.status,200);
+  const cookie=login.headers.get('set-cookie');assert.match(cookie,/HttpOnly/);assert.match(cookie,/SameSite=Strict/);
+  const result=await post('/api/command',{text:'Adicione saída de 120 para internet em dezembro',referenceDate:'2026-11-01'},cookie.split(';')[0]);
+  assert.equal(result.status,200);assert.equal((await result.json()).command.amount,120);assert.equal(calls,1);
+  const config=await (await fetch(base+'/api/config')).text();assert.equal(config.includes(env.GEMINI_API_KEY),false);
+});

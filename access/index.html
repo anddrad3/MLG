@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autenticação com PIN - UI Elegante</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            /* Tema Escuro Aprimorado */
+            --screen-bg: linear-gradient(135deg, #0a0a0b 0%, #1a1a1d 100%);
+            --card-bg: rgba(44, 44, 46, 0.8);
+            --input-bg: rgba(58, 59, 63, 0.7);
+            --text-primary: #f0f0f0;
+            --text-secondary: #a0a0a0;
+            --text-tertiary: #6e6e73;
+            --accent-blue: #0A84FF;
+            --accent-gradient: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+            --error-color: #ff453a;
+            --success-color: #30d158;
+            --border-color: rgba(58, 59, 63, 0.3);
+            --shadow-medium: rgba(0, 0, 0, 0.2);
+        }
+
+        html.light {
+             /* Tema Claro Aprimorado */
+            --screen-bg: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --input-bg: rgba(229, 229, 234, 0.8);
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-tertiary: #8e8e93;
+            --accent-blue: #007AFF;
+            --accent-gradient: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+            --error-color: #dc3545;
+            --success-color: #28a745;
+            --border-color: rgba(229, 229, 234, 0.5);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: var(--screen-bg);
+            transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            color: var(--text-primary);
+        }
+
+        #auth-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #auth-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: clamp(16px, 3vw, 24px);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 12px 40px var(--shadow-medium);
+            padding: clamp(24px, 6vw, 40px);
+            animation: popIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .auth-title {
+            font-size: clamp(1.75rem, 5vw, 2.25rem);
+            font-weight: 700;
+            margin-bottom: 8px;
+            transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .register-field {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            margin-bottom: 0;
+            transition: max-height 0.5s ease-in-out, opacity 0.4s ease-in, margin-bottom 0.5s ease-in-out;
+        }
+
+        #auth-card.register-mode .register-field {
+            max-height: 120px; /* Aumentado para acomodar o campo de PIN */
+            opacity: 1;
+            margin-bottom: 16px;
+        }
+
+        .auth-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .auth-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.3);
+        }
+
+        /* Estilos para o campo de PIN */
+        .pin-label {
+             display: block;
+             font-size: 0.9rem;
+             color: var(--text-secondary);
+             margin-bottom: 8px;
+             text-align: center;
+        }
+
+        .pin-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .pin-input {
+            width: 52px;
+            height: 52px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 0;
+        }
+
+        /* Remove setas de input de número */
+        .pin-input::-webkit-outer-spin-button,
+        .pin-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+
+        .auth-button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 8px;
+            border-radius: 12px;
+            background: var(--accent-gradient);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(10, 132, 255, 0.2);
+        }
+
+        .auth-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(10, 132, 255, 0.3);
+        }
+
+        .auth-button:active {
+            transform: translateY(-1px);
+        }
+
+        .form-switcher {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .form-switcher-link {
+            color: var(--accent-blue);
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .form-switcher-link:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="auth-container">
+        <div id="auth-card">
+            <div class="auth-header">
+                <h1 id="auth-title" class="auth-title">Bem-vindo</h1>
+                <p id="auth-subtitle" class="auth-subtitle">Faça login para continuar</p>
+            </div>
+            <form id="auth-form">
+                <div class="input-group register-field">
+                    <input type="text" id="name-input" class="auth-input" placeholder="Seu nome completo" autocomplete="name">
+                </div>
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <input type="email" id="email-input" class="auth-input" placeholder="seu@email.com" autocomplete="email" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <input type="password" id="password-input" class="auth-input" placeholder="Sua senha" autocomplete="current-password" required>
+                </div>
+                <div class="input-group register-field">
+                    <input type="password" id="confirm-password-input" class="auth-input" placeholder="Confirme sua senha" autocomplete="new-password">
+                </div>
+
+                <!-- Campo de PIN -->
+                <div class="input-group register-field">
+                    <label for="pin-1" class="pin-label">Crie seu PIN de 4 dígitos</label>
+                    <div class="pin-inputs" id="pin-container">
+                        <input type="tel" id="pin-1" class="auth-input pin-input" maxlength="1" pattern="[0-9]">
+                        <input type="tel" id="pin-2" class="auth-input pin-input" maxlength="1" pattern="[0-9]">
+                        <input type="tel" id="pin-3" class="auth-input pin-input" maxlength="1" pattern="[0-9]">
+                        <input type="tel" id="pin-4" class="auth-input pin-input" maxlength="1" pattern="[0-9]">
+                    </div>
+                </div>
+
+                <button type="submit" id="auth-button" class="auth-button">Entrar</button>
+            </form>
+            <p class="form-switcher">
+                <span id="form-switcher-text">Não tem uma conta?</span>
+                <a id="form-switcher-link" class="form-switcher-link">Registre-se</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const elements = {
+                authCard: document.getElementById('auth-card'),
+                authTitle: document.getElementById('auth-title'),
+                authSubtitle: document.getElementById('auth-subtitle'),
+                authForm: document.getElementById('auth-form'),
+                authButton: document.getElementById('auth-button'),
+                formSwitcherText: document.getElementById('form-switcher-text'),
+                formSwitcherLink: document.getElementById('form-switcher-link'),
+                nameInput: document.getElementById('name-input'),
+                passwordInput: document.getElementById('password-input'),
+                confirmPasswordInput: document.getElementById('confirm-password-input'),
+                pinContainer: document.getElementById('pin-container'),
+                pinInputs: document.querySelectorAll('.pin-input'),
+            };
+
+            const state = {
+                isRegisterMode: false,
+            };
+
+            const actions = {
+                submitForm(e) {
+                    e.preventDefault();
+
+                    let requiredInputsIds = ['email-input', 'password-input'];
+                    if (state.isRegisterMode) {
+                        requiredInputsIds = ['name-input', ...requiredInputsIds, 'confirm-password-input'];
+                    }
+
+                    for (const inputId of requiredInputsIds) {
+                        if (!document.getElementById(inputId).value) {
+                            this.showToast('Por favor, preencha todos os campos.', 'error');
+                            return;
+                        }
+                    }
+
+                    if (state.isRegisterMode) {
+                        if (elements.passwordInput.value !== elements.confirmPasswordInput.value) {
+                            this.showToast('As senhas não coincidem.', 'error');
+                            return;
+                        }
+                        const pin = Array.from(elements.pinInputs).map(input => input.value).join('');
+                        if (pin.length !== 4) {
+                            this.showToast('O PIN deve ter 4 dígitos.', 'error');
+                            return;
+                        }
+                    }
+
+                    this.showToast(state.isRegisterMode ? 'Cadastro realizado com sucesso!' : 'Login efetuado com sucesso!', 'success');
+                    elements.authForm.reset();
+                },
+
+                toggleAuthMode() {
+                    state.isRegisterMode = !state.isRegisterMode;
+                    elements.authCard.classList.toggle('register-mode', state.isRegisterMode);
+                    elements.authForm.reset();
+
+                    const slideOut = (el) => {
+                        el.style.transform = `translateY(${state.isRegisterMode ? '-' : ''}20px)`;
+                        el.style.opacity = '0';
+                    };
+                    const slideIn = (el, text) => {
+                        el.textContent = text;
+                        el.style.transform = `translateY(${state.isRegisterMode ? '' : '-'}20px)`;
+                        requestAnimationFrame(() => {
+                           el.style.transform = 'translateY(0)';
+                           el.style.opacity = '1';
+                        });
+                    };
+
+                    slideOut(elements.authTitle);
+                    slideOut(elements.authSubtitle);
+
+                    setTimeout(() => {
+                        if (state.isRegisterMode) {
+                            slideIn(elements.authTitle, 'Crie sua conta');
+                            slideIn(elements.authSubtitle, 'É rápido e fácil.');
+                            elements.authButton.textContent = 'Registrar';
+                            elements.formSwitcherText.textContent = 'Já tem uma conta?';
+                            elements.formSwitcherLink.textContent = 'Faça login';
+                        } else {
+                            slideIn(elements.authTitle, 'Bem-vindo');
+                            slideIn(elements.authSubtitle, 'Faça login para continuar');
+                            elements.authButton.textContent = 'Entrar';
+                            elements.formSwitcherText.textContent = 'Não tem uma conta?';
+                            elements.formSwitcherLink.textContent = 'Registre-se';
+                        }
+                    }, 200);
+                },
+
+                handlePinInput(e) {
+                    const target = e.target;
+                    const index = Array.from(elements.pinInputs).indexOf(target);
+
+                    if (target.value && index < elements.pinInputs.length - 1) {
+                        elements.pinInputs[index + 1].focus();
+                    }
+                },
+
+                handlePinKeyDown(e) {
+                     const target = e.target;
+                     const index = Array.from(elements.pinInputs).indexOf(target);
+
+                    if (e.key === 'Backspace' && !target.value && index > 0) {
+                        elements.pinInputs[index - 1].focus();
+                    }
+                },
+
+                handlePinPaste(e) {
+                    e.preventDefault();
+                    const paste = (e.clipboardData || window.clipboardData).getData('text').trim();
+                    if (!/^\d{4}$/.test(paste)) return;
+
+                    paste.split('').forEach((char, index) => {
+                        elements.pinInputs[index].value = char;
+                    });
+                    elements.pinInputs[3].focus();
+                },
+
+                showToast(message, type = 'info') {
+                    const existingToast = document.querySelector('.toast');
+                    if (existingToast) existingToast.remove();
+
+                    const toast = document.createElement('div');
+                    toast.className = `toast fixed top-5 left-1/2 -translate-x-1/2 z-[200] px-4 py-2 rounded-xl text-sm font-medium shadow-lg transition-all duration-300 transform -translate-y-20 opacity-0`;
+
+                    const colors = {
+                        success: 'bg-green-500 text-white',
+                        error: 'bg-red-500 text-white',
+                        info: 'bg-blue-500 text-white'
+                    };
+
+                    toast.className += ` ${colors[type] || colors.info}`;
+                    toast.textContent = message;
+                    document.body.appendChild(toast);
+
+                    requestAnimationFrame(() => {
+                        toast.style.transform = 'translateX(-50%) translateY(0)';
+                        toast.style.opacity = '1';
+                    });
+
+                    setTimeout(() => {
+                        toast.style.transform = 'translateX(-50%) translateY(-20px)';
+                        toast.style.opacity = '0';
+                        setTimeout(() => toast.remove(), 300);
+                    }, 3000);
+                }
+            };
+
+            const setupEventListeners = () => {
+                elements.authForm.addEventListener('submit', actions.submitForm.bind(actions));
+                elements.formSwitcherLink.addEventListener('click', actions.toggleAuthMode.bind(actions));
+
+                // Event Listeners para o PIN
+                elements.pinInputs.forEach(input => {
+                    input.addEventListener('input', actions.handlePinInput.bind(actions));
+                    input.addEventListener('keydown', actions.handlePinKeyDown.bind(actions));
+                });
+                elements.pinInputs[0].addEventListener('paste', actions.handlePinPaste.bind(actions));
+            };
+
+            const init = () => {
+                setupEventListeners();
+                lucide.createIcons();
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>
