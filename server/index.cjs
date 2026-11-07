@@ -76,7 +76,7 @@ function createServer(env = process.env, upstreamFetch = fetch) {
         if (!rateLimit(`ai:${ip}`,15) || !rateLimit('ai:global',100)) return json(res,429,{error:'Limite de pedidos atingido. Aguarde um minuto.'});
         const payload = await body(req);
         if (typeof payload.text !== 'string' || !payload.text.trim() || payload.text.length > 2000 || !/^\d{4}-\d{2}-\d{2}$/.test(payload.referenceDate || '')) return json(res,400,{error:'Informe o comando e uma data de referência válida.'});
-        const model = env.GEMINI_MODEL || 'gemini-2.5-flash';
+        const model = env.GEMINI_MODEL || 'gemini-3.8-flash';
         if (!/^[a-zA-Z0-9.-]+$/.test(model)) return json(res,503,{error:'Modelo não configurado corretamente.'});
         const response = await upstreamFetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
           method:'POST', signal:AbortSignal.timeout(25000),

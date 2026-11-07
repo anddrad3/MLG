@@ -15,7 +15,7 @@ Destino GitHub autorizado: **anddrad3/MLG**. Não usar outra conta.
    - `PUBLIC_ORIGIN=https://SEU_USUARIO.alwaysdata.net` (sem barra final).
    - `GEMINI_API_KEY`: chave da sua conta Google AI Studio.
    - `GEMINI_MODEL`: um modelo Gemini disponível para sua chave, por exemplo
-     `gemini-2.5-flash` quando habilitado na conta.
+     `gemini-3.8-flash` quando habilitado na conta.
    - `AI_ACCESS_TOKEN`: código aleatório privado com pelo menos 24 caracteres.
 
 6. Ative HTTPS e reinicie o site. Acesse `/api/config`: deve informar
