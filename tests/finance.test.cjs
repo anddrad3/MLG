@@ -138,3 +138,10 @@ test('clear all requires exact confirmation, preserves profile and cannot restor
  assert.equal(Object.values(a.state().financialData).reduce((n,m)=>n+m.despesas.length+m.entradas.length,0),0);assert.equal(a.state().caixinhas.length,0);assert.equal(a.state().recurringSeries.length,0);assert.equal(a.state().trash.length,0);assert.equal(a.w.localStorage.getItem('mlg.account.v1'),'{"name":"Preservado"}');assert.equal(a.w.localStorage.getItem('mlg.notes.v1'),'Nota da página inicial');
  const b=await app(t,a.state());assert.equal(b.$('geral-anotacao').value,'');assert.equal(b.w.MLGFinance.exportRows().length,1);
 });
+test('workspace keeps one notes editor and calculator keyboard does not consume typing in notes',async t=>{
+ const a=await app(t);a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));
+ assert.equal(a.w.document.querySelectorAll('#geral-anotacao').length,1);assert.equal(a.$('calculator-window').parentElement.id,'mlg-work-calculator');assert.equal(a.w.document.body.classList.contains('modal-open'),false);
+ const note=a.$('geral-anotacao');note.value='Planejamento';note.dispatchEvent(new a.w.Event('input'));note.focus();const key=new a.w.KeyboardEvent('keydown',{key:'9',bubbles:true,cancelable:true});note.dispatchEvent(key);assert.equal(key.defaultPrevented,false);
+ const number=a.$('calculator-window').querySelector('[data-key="2"]');number.focus();for(const key of ['2','+','3','Enter'])number.dispatchEvent(new a.w.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true}));assert.equal(a.$('calculator-display').textContent,'5');
+ a.w.document.querySelector('[data-view="overview"]').click();assert.equal(a.$('calculator-window').parentElement,a.w.document.body);assert.equal(a.state().financialData['2026-10'].geralAnotacao,'Planejamento');assert.equal(a.w.document.querySelectorAll('#calculator-window').length,1);
+});

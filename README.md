@@ -122,9 +122,16 @@ dividida em 3 parcelas”. O total é dividido sem perder centavos. Quando o val
 for por parcela, diga explicitamente “3 parcelas de 200 reais”. Revise a
 interpretação e confirme. Ctrl+Z desfaz todas as parcelas dessa operação.
 
-O reconhecimento de voz depende de suporte e permissão do navegador e pode
-usar o serviço de reconhecimento dele. A transcrição enviada é processada
-pelo Google Gemini. O restante das suas finanças não é enviado ao modelo.
+O microfone grava uma frase de até 30 segundos (500 KB), com permissão do
+navegador e HTTPS. Clique novamente para parar e interpretar, ou em Cancelar
+áudio para descartar. O áudio fica na memória e é enviado ao Google Gemini
+pelo backend para transcrição e interpretação, usando a mesma chave e cota
+dos comandos escritos. O restante das finanças não é enviado ao modelo.
+
+Na opção **Mesa de trabalho**, as contas do mês, as notas e a calculadora
+ficam lado a lado em telas grandes; no celular, os painéis ficam empilhados.
+A escolha da visualização é salva no navegador. Para usar o teclado da
+calculadora, clique nela; escrever nas notas não aciona os cálculos.
 
 ## Segurança e limites
 

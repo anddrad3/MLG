@@ -20,3 +20,13 @@ test('server protects secrets, requires authorization and validates upstream out
   assert.equal(implicit.status,200);assert.equal((await implicit.json()).command.date,'2026-11-01');
   const config=await (await fetch(base+'/api/config')).text();assert.equal(config.includes(env.GEMINI_API_KEY),false);
 });
+test('audio is authenticated, bounded and sent inline; spoken explicit dates override the selected month',async t=>{
+ let calls=0,received;
+ const env={GEMINI_API_KEY:'TEST_ONLY',AI_ACCESS_TOKEN:'test-audio-access-code-32-characters',PUBLIC_ORIGIN:'http://localhost'};
+ const server=createServer(env,async(url,options)=>{calls++;received=JSON.parse(options.body);return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({type:'despesas',name:'Mercado',amount:25,date:'2026-12-01',installments:1,amountMode:'total',transcript:'Gastei 25 no mercado em dezembro'})}]}}]})};});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>{server.closeAllConnections();server.close();});
+ const base=`http://127.0.0.1:${server.address().port}`,post=(path,data,cookie)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',Origin:env.PUBLIC_ORIGIN,...(cookie?{Cookie:cookie}:{})},body:JSON.stringify(data)});
+ const login=await post('/api/session',{accessCode:env.AI_ACCESS_TOKEN}),cookie=login.headers.get('set-cookie').split(';')[0],payload={text:'',referenceDate:'2026-11-01',audio:{mimeType:'audio/webm',data:'VEVTVA==',durationMs:2000}};
+ assert.equal((await post('/api/command',payload)).status,401);
+ assert.equal((await post('/api/command',{...payload,audio:{...payload.audio,durationMs:31000}},cookie)).status,400);assert.equal(calls,0);
+ const reply=await post('/api/command',payload,cookie),body=await reply.json();assert.equal(reply.status,200);assert.equal(body.command.date,'2026-12-01');assert.equal(body.transcript,'Gastei 25 no mercado em dezembro');assert.equal(received.contents[0].parts[1].inlineData.mimeType,'audio/webm');assert.equal(calls,1);
+});

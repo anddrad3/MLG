@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!await MLGAccount.unlock()) { location.href = '/'; return; }
             let isLoading = true, historyBaseline = null, historySignature = '', pendingPaymentSnapshot = null;
             let realUndoStack = [];
+            let calculatorDocked=false;
             let savingErrorShown = false;
             // --- ESTADO GLOBAL ---
             let isDataLocked = false, isEditLocked = false;
@@ -967,6 +968,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // --- GESTÃO DE MODAIS E ACESSIBILIDADE ---
             function openModal(modalElement, openerElement = document.activeElement) {
+                if(modalElement===calculatorWindow&&calculatorDocked){calculatorWindow.classList.remove("hidden");calculatorWindow.scrollIntoView({behavior:"smooth",block:"nearest"});calculatorWindow.querySelector(".calc-button")?.focus({preventScroll:true});return;}
                 if (modalStack.some(m => m.element === modalElement)) return;
                 if (modalElement === secondaryPinWrapper) {
                     validateSecondaryPin();
@@ -2116,7 +2118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 closeTopModal();
                 saveState();
             });
-            document.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]')||document.documentElement.classList.contains('mlg-locked'))return;if(calculatorWindow.classList.contains('hidden')||modalStack.at(-1)?.element!==calculatorWindow||e.target.closest('input,textarea,select,[contenteditable]'))return;const key=e.key===','?'.':e.key==='Enter'?'=':e.key==='Backspace'?'backspace':e.key==='Delete'?'clear':e.key;if(!/^[0-9.+*/=-]$/.test(key)&&!['backspace','clear'].includes(key))return;e.preventDefault();e.stopImmediatePropagation();calculatorButtons.querySelector('[data-key="'+key+'"]').click();},true);
+            document.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]')||document.documentElement.classList.contains('mlg-locked'))return;if(calculatorWindow.classList.contains('hidden')||(calculatorDocked?modalStack.length>0||!calculatorWindow.contains(document.activeElement):modalStack.at(-1)?.element!==calculatorWindow)||e.target.closest('input,textarea,select,[contenteditable]'))return;const key=e.key===','?'.':e.key==='Enter'?'=':e.key==='Backspace'?'backspace':e.key==='Delete'?'clear':e.key;if(!/^[0-9.+*/=-]$/.test(key)&&!['backspace','clear'].includes(key))return;e.preventDefault();e.stopImmediatePropagation();calculatorButtons.querySelector('[data-key="'+key+'"]').click();},true);
             calculatorButtons.addEventListener('click', e => {
                 const button = e.target.closest('button');
                 if (!button) return;
@@ -2194,7 +2196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
             const dragStart = (e) => {
-                if (e.target.closest('#close-calculator-button')) return;
+                if (calculatorDocked || e.target.closest('#close-calculator-button')) return;
                 if (window.innerWidth < 768) return;
                 calculatorWindow.style.transition = 'none';
                 document.body.classList.add('dragging-active');
@@ -7188,7 +7190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     recurringSeries,
                     nextGeneratedId,
                     calculator: {
-                        isOpen: !calculatorWindow.classList.contains('hidden'),
+                        isOpen: !calculatorDocked && !calculatorWindow.classList.contains('hidden'),
                         position: {
                             top: calculatorWindow.style.top,
                             left: calculatorWindow.style.left,
@@ -7341,6 +7343,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             MLGAccount.renderBadge(document.getElementById('mlg-profile'));
             document.querySelector('[aria-label="Voltar"]').addEventListener('click', () => location.href = '/');
             window.MLGFinance = {
+                dockCalculator(docked,container){calculatorDocked=docked;modalStack=modalStack.filter(m=>m.element!==calculatorWindow);document.body.classList.toggle("modal-open",modalStack.length>0);document.body.classList.remove("calculator-only");container.append(calculatorWindow);calculatorWindow.classList.toggle("hidden",!docked);calculatorWindow.classList.toggle("is-docked",docked);saveState();},
                 getDate: () => formatDateOnly(currentDate),
                 exportRows: () => buildPortableExportRows(),
                 exportNotes: () => buildPortableNoteRows(),
