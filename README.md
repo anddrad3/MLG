@@ -25,7 +25,8 @@ npm test
 O site deve ser servido por HTTP local ou HTTPS. Não abra o HTML por `file://`.
 Algumas bibliotecas de interface, fontes e geração de relatórios usam CDNs;
 os dados financeiros continuam no navegador. O leitor SheetJS está incluído
-localmente em `assets/vendor`, com sua licença Apache 2.0.
+localmente em `assets/vendor`, com sua licença Apache 2.0. A exportação usa
+ExcelJS 4.4.0, incluído no mesmo diretório com licença MIT.
 
 ## Organização
 
@@ -39,11 +40,17 @@ localmente em `assets/vendor`, com sua licença Apache 2.0.
 - `server/index.cjs`: arquivos públicos e proxy autenticado para Gemini.
 - `tests/`: regressões financeiras, planilha XLSX real e segurança do servidor.
 
-## Dados locais e sandbox
+## Perfil, dados locais e simulação
 
 As finanças e anotações são salvas em `localStorage`, usando a chave existente
 `financialControlState`. O perfil usa `mlg.account.v1`. Não existe sincronização
 entre dispositivos. Limpar os dados do site apaga o armazenamento local.
+
+O perfil oferece foto com arrastar e soltar, recorte, zoom, status e troca de
+nome/senha sem apagar finanças. O bloqueio por inatividade é configurável de
+1 a 60 minutos. O menu do perfil permite baixar um backup JSON completo ou
+apagar os dados locais após confirmação. O bloqueio é local, não criptografa
+os dados financeiros armazenados no navegador.
 
 O sandbox parte de uma cópia do cenário real. Alterações feitas nele ficam
 somente em memória; encerrar ou recarregar a página descarta os testes. O
@@ -53,6 +60,9 @@ financeiras; dentro de campos de texto, mantém o comportamento de edição nati
 Depósitos e resgates de caixinhas são transferências internas, sem inventar
 receitas. As projeções de rendimento são estimativas e não alteram o saldo.
 O depósito considera o saldo livre após despesas previstas.
+Cada caixinha tem saldo inicial e movimentos mensais. O fechamento passa ao
+mês seguinte; mudar um movimento passado recalcula os saldos posteriores.
+Resgates retroativos respeitam os recursos já usados nos meses seguintes.
 
 ## Planilhas
 
@@ -68,16 +78,18 @@ status ficam `On hold`. O status nunca é inferido pelo ano da planilha.
 | Pago | quitado |
 | Ainda não | ampulheta |
 
-A exportação mantém o modelo Andrade e acrescenta as abas `MLG Lancamentos` e
-`MLG Anotacoes`, usadas na reimportação para preservar os cinco estados,
-parcelas e notas sem duplicar os blocos decorativos. Reimportar a mesma origem
-e linha não duplica o registro. Uma planilha alterada estruturalmente pode ser
-entendida como uma nova origem; revise a prévia antes de importar.
+A exportação reproduz cores, proporções, mesclagens e fórmulas do modelo
+Andrade de referência, com três colunas por mês e áreas de notas. Se houver
+mais lançamentos que o modelo comporta, as linhas crescem sem cortar dados.
+As abas técnicas ocultas preservam IDs, datas, parcelas e anotações por
+categoria. A reimportação lê os valores e status das abas visíveis e atualiza
+registros conhecidos, sem duplicá-los. Alterações estruturais na planilha
+podem mudar a identificação da origem; revise a prévia antes de importar.
+Linhas nomeadas sem valor são informadas na prévia, sem inventar quantias.
 
 As abas de lançamentos não são um backup completo de perfil, fotos, cofre e
 regras de recorrência. Para preservar toda a sessão, copie o armazenamento
-local antes de limpar o navegador. Uma interface de backup completo pode ser
-adicionada separadamente.
+local com a opção **Baixar backup** do perfil antes de limpar o navegador.
 
 ## Gemini e voz
 

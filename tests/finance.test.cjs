@@ -9,7 +9,7 @@ async function app(t,state){
   const dom=new JSDOM(html,{url:'http://localhost/financeiro/',runScripts:'outside-only',pretendToBeVisual:true});
   t.after(()=>dom.window.close());
   const w=dom.window;
-  w.MLGDomain=domain;w.XLSX=XLSX;w.MLGAccount={ready:Promise.resolve(),unlock:async()=>true,renderBadge:()=>{}};
+  w.MLGVault=require('../assets/js/vault.js');w.MLGDomain=domain;w.XLSX=XLSX;w.MLGAccount={ready:Promise.resolve(),unlock:async()=>true,renderBadge:()=>{}};
   w.HTMLElement.prototype.scrollIntoView=()=>{};
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
   w.HTMLDialogElement.prototype.close=function(){this.open=false;};
@@ -54,6 +54,9 @@ async function importRows(a,rows,notes){
   const workbook=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook,XLSX.utils.aoa_to_sheet(rows),'MLG Lancamentos');
   if(notes)XLSX.utils.book_append_sheet(workbook,XLSX.utils.aoa_to_sheet(notes),'MLG Anotacoes');
+  return importWorkbook(a,workbook);
+}
+async function importWorkbook(a,workbook){
   const bytes=XLSX.write(workbook,{bookType:'xlsx',type:'array'});
   Object.defineProperty(a.$('import-spreadsheet-input'),'files',{configurable:true,value:[{name:'fixture.xlsx',arrayBuffer:async()=>bytes}]});
   a.$('import-spreadsheet-input').dispatchEvent(new a.w.Event('change'));
@@ -84,6 +87,31 @@ test('real XLSX round trip preserves statuses, installments and all notes, skips
   assert.equal(b.w.MLGFinance.exportRows().length,7,'in-memory rows after import');
   b.click('simulation-mode-toggle-btn');assert.match(b.$('despesas-list-container').textContent,/Teste/, `date=${b.$('date-display').textContent} rows=${JSON.stringify(b.w.MLGFinance.exportRows())} toast=${b.$('sr-announcer').textContent}`);
   b.click('simulation-end-btn');assert.equal(b.state().financialData['2026-10'].despesas.length,4);
+});
+test('reimport updates description, amount and payment instead of adding duplicates',async t=>{
+ const a=await app(t),rows=[['ID','Tipo','Descrição','Valor','Mês','Ano','Status'],['ref-1','despesas','Conta',20,11,2026,'Não pago']];
+ await importRows(a,rows);rows[1][2]='Conta corrigida';rows[1][3]=35;rows[1][6]='Pago';await importRows(a,rows);
+ const items=a.state().financialData['2026-10'].despesas;assert.equal(items.length,1);assert.equal(items[0].nome,'Conta corrigida');assert.equal(items[0].valor,35);assert.equal(items[0].pago,true);
+});
+test('Andrade visible edits override hidden metadata and preserve dates and installments',async t=>{
+ const a=await app(t);a.w.MLGFinance.addCommand({...command('despesas',100),installments:3});
+ const exporter=require('../assets/js/andrade-export.js'),ExcelJS=require('../assets/vendor/exceljs.min.js');
+ const wb=exporter.build(ExcelJS,{years:[2026,2027],getMonth:k=>a.state().financialData[k],portableRows:JSON.parse(JSON.stringify(a.w.MLGFinance.exportRows())),portableNotes:JSON.parse(JSON.stringify(a.w.MLGFinance.exportNotes()))});
+ wb.getWorksheet('PLANILHA DE CONTAS 2026').getCell('R53').value='Conta corrigida';wb.getWorksheet('PLANILHA DE CONTAS 2026').getCell('S53').value=44;wb.getWorksheet('PLANILHA DE CONTAS 2026').getCell('T53').value='PAGO';
+ const imported=XLSX.read(await wb.xlsx.writeBuffer());await importWorkbook(a,imported);
+ const items=a.state().financialData['2026-10'].despesas;assert.equal(items.length,1,JSON.stringify(items));assert.equal(items[0].nome,'Conta corrigida');assert.equal(items[0].valor,44);assert.equal(items[0].pago,true);assert.equal(items[0].data,'2026-11-05');assert.equal(items[0].occurrenceTotal,3);
+});
+test('calculator keyboard and paid sorting work without paginated lists',async t=>{
+ const a=await app(t);a.click('calculator-button');
+ for(const key of ['1','2','+','3','Enter'])a.w.document.body.dispatchEvent(new a.w.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true}));
+ assert.match(a.$('calculator-window').textContent,/15/);a.click('close-calculator-button');
+ a.w.MLGFinance.addCommand(command('despesas',50));const card=a.w.document.querySelector('.item-entry-card');card.click();assert.equal(card.classList.contains('is-selected'),true);
+ card.dispatchEvent(new a.w.KeyboardEvent('keydown',{key:'Delete',bubbles:true,cancelable:true}));assert.equal(a.$('delete-item-modal').classList.contains('hidden'),false);a.click('delete-item-confirm-btn');assert.equal(a.state().financialData['2026-10'].despesas.length,0);
+});
+test('private reference imports exact counts without totals, placeholders or repeated rows',{skip:!process.env.MLG_REFERENCE_WORKBOOK},async t=>{
+ const a=await app(t),workbook=XLSX.read(fs.readFileSync(process.env.MLG_REFERENCE_WORKBOOK));
+ await importWorkbook(a,workbook);await importWorkbook(a,workbook);
+ const months=Object.values(a.state().financialData);assert.equal(months.reduce((n,m)=>n+m.entradas.length,0),271);assert.equal(months.reduce((n,m)=>n+m.despesas.length,0),1460);assert.equal(a.w.MLGFinance.exportNotes().length-1,37);
 });
 test('currency input retains Brazilian cents across repeated blur',async t=>{
   const a=await app(t),field=a.$('sobras-cofre-input');field.value='1.234,56';

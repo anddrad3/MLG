@@ -73,7 +73,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             function normalizeCaixinhaEntry(entry = {}) {
-                return {
+                return MLGVault.hydrate({
+                    ...entry,
                     id: entry.id || generateItemId(),
                     nome: entry.nome || 'Caixinha',
                     valor: roundToTwo(Number(entry.valor) || 0),
@@ -82,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     foto: entry.foto || null,
                     taxaJuros: Math.max(0, Number(entry.taxaJuros) || 0),
                     jurosTipo: entry.jurosTipo === 'monthly' || entry.jurosTipo === 'yearly' ? entry.jurosTipo : 'none'
-                };
+                },()=>getMonthKey(currentDate));
             }
 
             function getCaixinhaMonthlyRate(caixinha) {
@@ -134,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // --- TEXTOS E DEFINIÇÕES DOS INDICADORES ---
             const indicatorInfo = {
-                cofre: { title: 'Saldo no Cofre', description: 'É o valor total que você guardou em todas as suas "caixinhas" (objetivos). Esse dinheiro não está disponível para as despesas do dia a dia, a menos que você faça um resgate.', formula: 'Soma dos valores de todas as caixinhas.', example: 'Se você tem R$ 500 na caixinha de "Emergência" e R$ 300 na de "Viagem", o saldo no cofre é R$ 800.' },
+                cofre: { title: 'Soma dos investimentos', description: 'É o valor total que você guardou em todas as suas "caixinhas" (objetivos). Esse dinheiro não está disponível para as despesas do dia a dia, a menos que você faça um resgate.', formula: 'Soma dos valores de todas as caixinhas.', example: 'Se você tem R$ 500 na caixinha de "Emergência" e R$ 300 na de "Viagem", o saldo no cofre é R$ 800.' },
                 alocado: { title: 'Alocado para Próx. Mês', description: 'É o dinheiro que sobrou do mês anterior e que você decidiu adiantar para ajudar a cobrir as despesas do próximo mês.', formula: 'Valor definido no fluxo de "Sobras".', example: 'No final de setembro, sobraram R$ 200. Você decidiu alocar esse valor para outubro. Em outubro, este indicador mostrará R$ 200.' },
                 entradas: { title: 'Entradas Previstas (EP)', description: 'É a soma de todo o dinheiro que você espera receber no mês, como salários, bônus, resgates do cofre, etc.', formula: 'Soma de todos os itens na coluna "Entradas".', example: 'Salário (R$ 5.000) + Freela (R$ 450) = R$ 5.450.' },
                 despesas: { title: 'Despesas Previstas (DP)', description: 'É a soma de todos os seus gastos e contas do mês, mesmo os que você ainda não pagou.', formula: 'Soma de todos os itens na coluna "Despesas".', example: 'Aluguel (R$ 1.800) + Luz (R$ 150) = R$ 1.950.' },
@@ -262,10 +263,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         };
                     case 'simulation':
                         return {
-                            text: 'Sandbox',
+                            text: 'Simulação',
                             bg: 'bg-blue-200 dark:bg-blue-900/60',
                             textColor: 'text-blue-800 dark:text-blue-200',
-                            tooltip: 'Esta despesa está em modo sandbox e não altera o fechamento real enquanto a sandbox estiver ativa.'
+                            tooltip: 'Esta despesa está em modo de simulação e não altera o fechamento real enquanto a simulação estiver ativa.'
                         };
                     case 'unpayable':
                         return {
@@ -414,8 +415,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     simulationModeToggleBtn.classList.toggle('is-active', simulationState.active);
                     simulationModeToggleBtn.setAttribute('aria-pressed', String(simulationState.active));
                     simulationModeToggleBtn.innerHTML = simulationState.active
-                        ? '<i class="fa-solid fa-rotate-left"></i><span>Encerrar sandbox</span>'
-                        : '<i class="fa-solid fa-flask"></i><span>Modo sandbox</span>';
+                        ? '<i class="fa-solid fa-rotate-left"></i><span>Encerrar simulação</span>'
+                        : '<i class="fa-solid fa-flask"></i><span>Simulação</span>';
                 }
                 if (!simulationBannerCopy) return;
                 if (!simulationState.active) {
@@ -423,7 +424,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
                 const monthLabel = getMonthLabelFromKey(simulationState.triggerMonthKey || getMonthKey(currentDate)) || `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-                simulationBannerCopy.textContent = `Sandbox ativa em ${monthLabel}. Você pode testar pagamentos, criar caixinhas, usar o cofre e fechar o mês inteiro. Ao clicar em "Encerrar sandbox", todo esse cenário é descartado na hora.`;
+                simulationBannerCopy.textContent = `Simulação ativa em ${monthLabel}. Você pode testar pagamentos, criar caixinhas, usar o cofre e fechar o mês inteiro. Ao clicar em "Encerrar simulação", todo esse cenário é descartado na hora.`;
             }
 
             function startSimulationMode(item = null) {
@@ -447,8 +448,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     renderSimulationBanner();
                     updateAllUI();
                     showToast(resetCount > 0
-                        ? 'Sandbox iniciada. As despesas pagas voltaram a ficar pendentes para você testar do zero.'
-                        : 'Sandbox iniciada. Tudo o que você testar aqui pode ser descartado depois.');
+                        ? 'Simulação iniciada. As despesas pagas voltaram a ficar pendentes para você testar do zero.'
+                        : 'Simulação iniciada. Tudo o que você testar aqui pode ser descartado depois.');
                     return;
                 } else if (item?.id) {
                     simulationState.triggerExpenseId = item.id;
@@ -456,7 +457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 renderSimulationBanner();
                 updateAllUI();
-                showToast('Sandbox iniciada. Tudo o que você testar aqui pode ser descartado depois.');
+                showToast('Simulação iniciada. Tudo o que você testar aqui pode ser descartado depois.');
             }
 
             function endSimulationMode({ silent = false } = {}) {
@@ -470,7 +471,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 resetSimulationState();
                 restoreSimulationSnapshot(snapshot);
                 updateAllUI();
-                if (!silent) showToast('Sandbox encerrada. O cenário real foi restaurado.');
+                if (!silent) showToast('Simulação encerrada. O cenário real foi restaurado.');
             }
 
             function markExpenseCollectionPaid(items, monthKey, options = {}) {
@@ -543,6 +544,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 syncCurrentEditLockState();
                 updateDateDisplay();
                 updateIndicators();
+                renderBoxMenu();
                 renderLists();
                 if (cofreModal && !cofreModal.classList.contains('hidden')) {
                     renderCaixinhas();
@@ -831,13 +833,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             function renderColumn(type, items, container) {
-                const sorted = sortColumnItems(type, items);
+                const sorted = sortColumnItems(type, items); const expanded=collapsedColumnState[getCollapsedColumnStateKey(type)]===false;
                 container.replaceChildren();
                 const list = document.createElement('div');
-                list.className = 'column-expanded-list';
+                list.className = 'column-expanded-list mlg-scroll-list'+(expanded?' is-expanded':''); list.tabIndex=0; list.setAttribute('aria-label',type==='entradas'?'Lista de entradas':'Lista de despesas');
                 if (!sorted.length) list.append(createColumnEmptyState(type));
                 sorted.forEach(item => list.append(createItemCard(item, type)));
-                container.append(list, createColumnAddButton(type));
+                const toggle=document.createElement('button');toggle.type='button';toggle.className='mlg-list-expand';toggle.textContent=expanded?'Recolher lista':'Ver lista inteira';toggle.setAttribute('aria-expanded',String(expanded));toggle.onclick=()=>{setColumnCollapsed(type,expanded);renderColumn(type,items,container);};container.append(list,toggle,createColumnAddButton(type));
             }
 
             function createItemCard(item, type) {
@@ -860,7 +862,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     : '';
                 card.className = `item-entry-card flex items-start p-3 pl-4 rounded-2xl group relative space-x-3 ${stateClass} ${isHighlighted ? 'is-search-highlight bg-emerald-50 dark:bg-emerald-950/20' : ''}`;
                 card.dataset.id = item.id;
-                card.dataset.type = type;
+                card.dataset.type = type; card.tabIndex=0; card.setAttribute('aria-label',item.nome); card.addEventListener('click',e=>{if(e.target.closest('button,input,a'))return;document.querySelectorAll('.item-entry-card.is-selected').forEach(el=>{el.classList.remove('is-selected');el.setAttribute('aria-selected','false');});card.classList.add('is-selected');card.setAttribute('aria-selected','true');card.focus({preventScroll:true});});
 
                 const formattedDate = item.data ? new Date(item.data + 'T00:00:00').toLocaleDateString('pt-BR') : 'Sem data';
                 const colorClass = type === 'entradas' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
@@ -1405,7 +1407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (sobras > 0) {
                     totalSobrasParaDistribuir = sobras;
                     document.getElementById('sobras-modal-title').textContent = simulationState.active
-                        ? 'O que fazer com a sobra da sandbox?'
+                        ? 'O que fazer com a sobra da simulação?'
                         : 'O que fazer com o valor que sobrou?';
                     sobrasTotalAmountEl.textContent = formatCurrency(sobras);
                     sobrasRestanteEl.textContent = formatCurrency(sobras);
@@ -1423,7 +1425,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             function populateCaixinhasSelect() {
                 caixinhas = caixinhas.map(normalizeCaixinhaEntry);
                 sobrasCaixinhaSelect.innerHTML = '<option value="">Selecione a caixinha</option>';
-                caixinhas.forEach(caixinha => {
+                caixinhas.filter(c=>MLGVault.active(c,getMonthKey(currentDate))).forEach(caixinha => {
                     const option = document.createElement('option');
                     option.value = caixinha.id;
                     option.textContent = caixinha.nome;
@@ -1540,8 +1542,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const showDateless = showOnlyDatelessCheckbox.checked;
                 caixinhas = caixinhas.map(normalizeCaixinhaEntry);
                 const filteredCaixinhas = showDateless
-                    ? caixinhas.filter(c => !c.inicio && !c.termino)
-                    : caixinhas;
+                    ? caixinhas.filter(c => MLGVault.active(c,getMonthKey(currentDate)) && !c.inicio && !c.termino)
+                    : caixinhas.filter(c=>MLGVault.active(c,getMonthKey(currentDate)));
 
                 if (filteredCaixinhas.length === 0) {
                     caixinhasListContainer.innerHTML = `<div class="text-center text-gray-500 dark:text-zinc-400 py-10"><p>Nenhuma caixinha encontrada.</p><p class="text-sm">${showDateless ? 'Desmarque o filtro para ver todas.' : 'Crie uma nova para começar!'}</p></div>`;
@@ -1593,6 +1595,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (!action || isEditLocked) return;
                         const clickedCaixinha = caixinhas.find(c => c.id == div.dataset.id);
                         if (!clickedCaixinha) return;
+                        if(action==='delete'&&Object.keys(clickedCaixinha.movements||{}).some(k=>MLGVault.order(k)>MLGVault.order(getMonthKey(currentDate))&&clickedCaixinha.movements[k])){showToast('Esta caixinha tem movimentos futuros. Remova-os ou exclua no último mês com movimento.');return;}
 
                         if (action === 'deposit') {
                             openDepositDialog(clickedCaixinha);
@@ -1727,8 +1730,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     retirarErrorMessage.textContent = 'Por favor, insira um valor válido.';
                     return;
                 }
-                if (valorRetirar > caixinhaParaRetirar.valor) {
-                    retirarErrorMessage.textContent = 'Valor maior que o saldo disponível.';
+                if (valorRetirar > MLGVault.available(caixinhaParaRetirar,getMonthKey(currentDate))) {
+                    retirarErrorMessage.textContent = 'O resgate deixaria este mês ou um mês posterior sem saldo. Disponível: '+formatCurrency(MLGVault.available(caixinhaParaRetirar,getMonthKey(currentDate)));
                     return;
                 }
                 const index = caixinhas.findIndex(c => c.id === caixinhaParaRetirar.id);
@@ -1751,7 +1754,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!caixinhaParaExcluir) return;
 
                 caixinhas = caixinhas.map(normalizeCaixinhaEntry);
-                const otherCaixinhas = caixinhas.filter(c => c.id !== caixinhaParaExcluir.id);
+                const otherCaixinhas = caixinhas.filter(c => c.id !== caixinhaParaExcluir.id && MLGVault.active(c,getMonthKey(currentDate)));
                 otherCaixinhas.forEach(caixinha => {
                     const option = document.createElement('option');
                     option.value = caixinha.id;
@@ -1857,7 +1860,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 // Delete the caixinha
-                caixinhas = caixinhas.filter(c => c.id !== caixinhaParaExcluir.id);
+                const removedBox=caixinhas.find(box=>box.id===caixinhaParaExcluir.id);removedBox.valor=0;removedBox.deletedFromMonth=getMonthKey(currentDate);
 
                 showToast(`Caixinha "${caixinhaParaExcluir.nome}" excluída.`);
 
@@ -2113,6 +2116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 closeTopModal();
                 saveState();
             });
+            document.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]')||document.documentElement.classList.contains('mlg-locked'))return;if(calculatorWindow.classList.contains('hidden')||modalStack.at(-1)?.element!==calculatorWindow||e.target.closest('input,textarea,select,[contenteditable]'))return;const key=e.key===','?'.':e.key==='Enter'?'=':e.key==='Backspace'?'backspace':e.key==='Delete'?'clear':e.key;if(!/^[0-9.+*/=-]$/.test(key)&&!['backspace','clear'].includes(key))return;e.preventDefault();e.stopImmediatePropagation();calculatorButtons.querySelector('[data-key="'+key+'"]').click();},true);
             calculatorButtons.addEventListener('click', e => {
                 const button = e.target.closest('button');
                 if (!button) return;
@@ -2281,6 +2285,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
              // --- LISTENERS GLOBAIS ---
             document.addEventListener('keydown', (event) => {
+                if(document.querySelector('dialog[open]')||document.documentElement.classList.contains('mlg-locked'))return;
+                if(event.key==='Delete'&&!modalStack.length&&!event.target.closest('input,textarea,select,[contenteditable]')){const selected=document.querySelector('.item-entry-card.is-selected');if(selected&&!isEditLocked){event.preventDefault();selected.querySelector('[data-action="delete"]')?.click();}return;}
                 if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
                     if (event.target.closest('input,textarea,[contenteditable="true"]')) return;
                     event.preventDefault(); if (!isEditLocked) {pendingPaymentSnapshot = null; undoLastAction();} return;
@@ -2481,7 +2487,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             const visibilityLock = document.getElementById('visibility-lock'); const toggleVisibilityButton = document.getElementById('toggle-visibility-button'); const iconEyeOpen = document.getElementById('icon-eye-open'); const iconEyeSlashed = document.getElementById('icon-eye-slashed');
             function updateVisibilityButton() { if (isDataLocked) { iconEyeOpen.classList.remove('hidden'); iconEyeSlashed.classList.add('hidden'); toggleVisibilityButton.setAttribute('aria-label', 'Revelar dados financeiros'); } else { iconEyeOpen.classList.add('hidden'); iconEyeSlashed.classList.remove('hidden'); toggleVisibilityButton.setAttribute('aria-label', 'Ocultar dados financeiros'); } }
-            toggleVisibilityButton.addEventListener('click', () => { if (isDataLocked) { pinModalPurpose = 'unlockVisibility'; openModal(secondaryPinWrapper); secondaryPinTitle.textContent = 'Revelar Dados'; } else { lockData(); } });
+            toggleVisibilityButton.addEventListener('click', async () => { if (isDataLocked) { if(await MLGAccount.unlock('Revelar dados',true)) unlockData(); } else lockData(); });
             const toggleEditLockButton = document.getElementById('toggle-edit-lock-button'); const iconPadlockOpen = document.getElementById('icon-padlock-open'); const iconPadlockLocked = document.getElementById('icon-padlock-locked');
             toggleEditLockButton.addEventListener('click', (e) => {
                 if (isEditLocked) {
@@ -2713,7 +2719,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     label,
                     currentDate: currentDate.getTime(),
                     financialData: cloneSerializable(financialData),
-                    caixinhas: cloneSerializable(caixinhas),
+                    caixinhas: cloneSerializable(caixinhas.map(box=>({...box,valor:box.openingValue}))),
                     trash: cloneSerializable(trash),
                     recurringSeries: cloneSerializable(recurringSeries),
                     nextGeneratedId,
@@ -4517,7 +4523,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             function buildFamilyAndradeImportedRow(sheetName, rowNumber, type, monthKey, nome, valor, pago = '') {
-                const cleanedName = cleanImportedText(nome);
+                const cleanedName = cleanImportedMultilineText(nome);
                 const installmentInfo = parseImportedInstallmentInfo(cleanedName);
 
                 return {
@@ -4560,9 +4566,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 for (let rowIndex = entryStartRow; rowIndex < totalEntriesRow; rowIndex++) {
-                    const nome = cleanImportedText(getImportedSheetCell(sheetRows, rowIndex, anchor.colIndex));
+                    const nome = cleanImportedMultilineText(getImportedSheetCell(sheetRows, rowIndex, anchor.colIndex));
                     const valor = parseImportedCurrency(getImportedSheetCell(sheetRows, rowIndex, anchor.colIndex + 1));
-                    if (!nome || isFamilyAndradeSummaryLabel(nome) || !Number.isFinite(valor) || valor === 0) continue;
+                    if (!nome || isFamilyAndradeSummaryLabel(nome)) continue;
+                    if (!Number.isFinite(valor) || valor === 0) {skippedRows.push({sheetName,rowNumber:rowIndex+1,reason:'Linha com descrição, mas sem valor diferente de zero.'});continue;}
 
                     importedRows.push(
                         buildFamilyAndradeImportedRow(sheetName, rowIndex + 1, 'entradas', monthKey, nome, valor)
@@ -4580,12 +4587,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 for (let rowIndex = expenseStartRow; rowIndex < nextBlockRow; rowIndex++) {
-                    const nome = cleanImportedText(getImportedSheetCell(sheetRows, rowIndex, anchor.colIndex));
+                    const nome = cleanImportedMultilineText(getImportedSheetCell(sheetRows, rowIndex, anchor.colIndex));
                     if (isFamilyAndradeSummaryLabel(nome)) break;
                     if (!nome) continue;
 
                     const valor = parseImportedCurrency(getImportedSheetCell(sheetRows, rowIndex, anchor.colIndex + 1));
-                    if (!Number.isFinite(valor) || valor === 0) continue;
+                    if (!Number.isFinite(valor) || valor === 0) {skippedRows.push({sheetName,rowNumber:rowIndex+1,reason:'Linha com descrição, mas sem valor diferente de zero.'});continue;}
 
                     const statusText = cleanImportedText(getImportedSheetCell(sheetRows, rowIndex, anchor.colIndex + 2));
                     const pago = statusText;
@@ -4761,6 +4768,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 const workbook = XLSX.read(file, { type: 'array', cellDates: true });
+                if (workbook.Sheets['MLG Referencias'] && isFamilyAndradeWorkbook(workbook)) {
+                    const result=parseFamilyAndradeWorkbook(workbook);
+                    const portable=parseGenericSpreadsheetWorkbook({SheetNames:['MLG Lancamentos'],Sheets:workbook.Sheets});
+                    const refs=XLSX.utils.sheet_to_json(workbook.Sheets['MLG Referencias'],{defval:''});
+                    result.importedRows.forEach(row=>{
+                        const ref=refs.find(r=>r.Aba===row.sheetName && Number(r.Linha)===row.rowNumber && r.Mes===row.monthKey && r.Tipo===row.type);
+                        const source=ref && portable.importedRows.find(r=>r.sourceId===String(ref.ID));
+                        if(source){row.sourceId=source.sourceId;row.data=source.data;row.occurrenceIndex=source.occurrenceIndex;row.occurrenceTotal=source.occurrenceTotal;if(row.type==='entradas')row.paymentState=source.paymentState;}
+                    });
+                    if(workbook.Sheets['MLG Anotacoes']) result.importedGeneralNotes.push(...XLSX.utils.sheet_to_json(workbook.Sheets['MLG Anotacoes'],{defval:''}).filter(r=>/^\d{4}-(?:[0-9]|1[01])$/.test(r.Mes)&&['entradas','despesas'].includes(r.Tipo)).map(r=>({monthKey:r.Mes,type:r.Tipo,text:String(r.Texto)})));
+                    return result;
+                }
                 if (workbook.Sheets['MLG Lancamentos']) {
                     const result = parseGenericSpreadsheetWorkbook({SheetNames:['MLG Lancamentos'], Sheets:workbook.Sheets});
                     if (workbook.Sheets['MLG Anotacoes']) {
@@ -4872,8 +4891,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 pendingSpreadsheetImport.importedRows.forEach(entry => {
                     const monthData = ensureMonthData(entry.monthKey);
-                    const importKey = JSON.stringify([entry.sheetName, entry.rowNumber, entry.monthKey, entry.type, entry.nome, entry.valor]);
-                    if (monthData[entry.type].some(existing => existing.importKey === importKey || (entry.sourceId && String(existing.id) === entry.sourceId)) || monthData.simulationTemplates.some(existing => existing.importKey === importKey)) return;
+                    const importKey = JSON.stringify([entry.sheetName, entry.rowNumber, entry.monthKey, entry.type]);
+                    const matches = existing => {
+                        if(entry.sourceId && (String(existing.id)===entry.sourceId || existing.importSourceId===entry.sourceId)) return true;
+                        try { const old=JSON.parse(existing.importKey||'null');return Array.isArray(old)&&JSON.stringify(old.slice(0,4))===importKey; } catch {return false;}
+                    };
+                    const previous=[...monthData[entry.type],...monthData.simulationTemplates.filter(i=>i.type===entry.type)].find(matches);
+                    monthData[entry.type]=monthData[entry.type].filter(i=>!matches(i));
+                    monthData.simulationTemplates=monthData.simulationTemplates.filter(i=>i.type!==entry.type||!matches(i));
                     const item = createStandaloneItem(entry.type, {
                         nome: entry.nome,
                         valor: entry.valor,
@@ -4890,6 +4915,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         item.parcelaAtual = entry.occurrenceIndex;
                         item.parcelaTotal = entry.occurrenceTotal;
                     }
+                    if(previous) item.id=previous.id;
+                    if(entry.sourceId) item.importSourceId=entry.sourceId;
                     item.importKey = importKey;
                     if (entry.paymentState === 'simulation' && !simulationState.active) {
                         monthData.simulationTemplates.push({...item, type:entry.type});
@@ -6520,43 +6547,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (window.ExcelJS) {
                     try {
-                        const workbook = new ExcelJS.Workbook();
-                        workbook.creator = 'Controle Financeiro';
-                        workbook.created = new Date();
-                        workbook.calcProperties.fullCalcOnLoad = true;
-                        getFamilyAndradeExportYears().forEach(year => {
-                            buildFamilyAndradeContaSheetExcel(workbook, year);
-                            buildFamilyAndradeResumoSheetExcel(workbook, year);
-                            buildFamilyAndradeCategoryNotesSheetExcel(workbook, year, 'entradas');
-                            buildFamilyAndradeCategoryNotesSheetExcel(workbook, year, 'despesas');
-                        });
-                        workbook.addWorksheet('MLG Lancamentos').addRows(buildPortableExportRows());
-                        workbook.addWorksheet('MLG Anotacoes').addRows(buildPortableNoteRows());
+                        const workbook = MLGAndradeExport.build(ExcelJS,{years:getFamilyAndradeExportYears(),getMonth:getMonthDataSnapshot,portableRows:buildPortableExportRows(),portableNotes:buildPortableNoteRows()});
                         await downloadExcelJsWorkbook(workbook, filename);
-                        showToast('Planilha Excel exportada com layout Andrade, fórmulas e abas extras de anotações.');
+                        showToast('Planilha exportada com o modelo Andrade e suas anotações.');
                         return;
                     } catch (error) {
-                        console.error('Falha ao exportar com ExcelJS, usando fallback básico.', error);
+                        console.error('Falha ao exportar o modelo Andrade.', error);
                     }
                 }
 
-                if (!window.XLSX) {
-                    showToast('A biblioteca de Excel não está disponível para exportar.');
-                    return;
-                }
-
-                const workbook = XLSX.utils.book_new();
-                getFamilyAndradeExportYears().forEach(year => {
-                    XLSX.utils.book_append_sheet(workbook, buildFamilyAndradeContaSheet(year), `PLANILHA DE CONTAS ${year}`);
-                    XLSX.utils.book_append_sheet(workbook, buildFamilyAndradeResumoSheet(year), `PLANILHA DE RESUMOS ${year}`);
-                    XLSX.utils.book_append_sheet(workbook, buildFamilyAndradeCategoryNotesSheet(year, 'entradas'), `ANOTACOES ENTRADAS ${year}`);
-                    XLSX.utils.book_append_sheet(workbook, buildFamilyAndradeCategoryNotesSheet(year, 'despesas'), `ANOTACOES DESPESAS ${year}`);
-                });
-
-                XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(buildPortableExportRows()), 'MLG Lancamentos');
-                XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(buildPortableNoteRows()), 'MLG Anotacoes');
-                XLSX.writeFile(workbook, filename, { compression: true });
-                showToast('Planilha Excel exportada em modo compatível, com abas extras de anotações.');
+                showToast('Não foi possível exportar o modelo Andrade. Recarregue o site e tente novamente.');
             }
 
             function closeSettingsModalIfOpen() {
@@ -6614,7 +6614,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 openTimelinePanel(opener);
             });
-            document.getElementById('open-analytics-modal-btn').addEventListener('click', () => {
+            document.getElementById('open-analytics-modal-btn')?.addEventListener('click', () => {
                 closeTopModal();
                 const opener = document.getElementById('settings-button');
                 if (isDataLocked) {
@@ -6727,7 +6727,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 doc.setFontSize(14); doc.text("Resumo dos Indicadores", 14, 50);
                 doc.setFontSize(10);
-                const indicatorsText = `Entradas Previstas: ${formatCurrency(data.entradas.reduce((a,b)=>a+b.valor,0))} (Soma de todas as entradas do mês)\nDespesas Previstas: ${formatCurrency(data.despesas.reduce((a,b)=>a+b.valor,0))} (Soma de todas as despesas)\nPago no Mês: ${formatCurrency(data.despesas.filter(d=>d.pago).reduce((a,b)=>a+b.valor,0))} (Soma das despesas pagas)\nQuanto Falta Pagar: ${formatCurrency(Math.max(0, data.despesas.reduce((a,b)=>a+b.valor,0) - data.despesas.filter(d=>d.pago).reduce((a,b)=>a+b.valor,0)))}\nSobras: ${formatCurrency(Math.max(0, data.entradas.reduce((a,b)=>a+b.valor,0) - data.despesas.reduce((a,b)=>a+b.valor,0)))}\nSaldo no Cofre: ${formatCurrency(getCofreTotal())}\nAlocado p/ Próx. Mês: ${formatCurrency(data.alocadoProximoMes)}`;
+                const indicatorsText = `Entradas Previstas: ${formatCurrency(data.entradas.reduce((a,b)=>a+b.valor,0))} (Soma de todas as entradas do mês)\nDespesas Previstas: ${formatCurrency(data.despesas.reduce((a,b)=>a+b.valor,0))} (Soma de todas as despesas)\nPago no Mês: ${formatCurrency(data.despesas.filter(d=>d.pago).reduce((a,b)=>a+b.valor,0))} (Soma das despesas pagas)\nQuanto Falta Pagar: ${formatCurrency(Math.max(0, data.despesas.reduce((a,b)=>a+b.valor,0) - data.despesas.filter(d=>d.pago).reduce((a,b)=>a+b.valor,0)))}\nSobras: ${formatCurrency(Math.max(0, data.entradas.reduce((a,b)=>a+b.valor,0) - data.despesas.reduce((a,b)=>a+b.valor,0)))}\nSoma dos investimentos: ${formatCurrency(getCofreTotal())}\nAlocado p/ Próx. Mês: ${formatCurrency(data.alocadoProximoMes)}`;
                 doc.text(indicatorsText, 14, 60);
 
                 const headStyle = { fillColor: [34, 197, 94] };
@@ -6952,16 +6952,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     'Todos os itens permanecem visíveis na lista. Use a busca para localizar um lançamento.'
                 ]);
 
-                addSection('5. Modo sandbox', [
-                    'O botão Modo sandbox ativa uma sandbox completa. A partir desse momento, pagamentos, caixinhas, uso do cofre, alocações e outros testes podem ser feitos sem gravar o cenário real.',
+                addSection('5. Simulação', [
+                    'O botão Simulação ativa uma simulação completa. A partir desse momento, pagamentos, caixinhas, uso do cofre, alocações e outros testes podem ser feitos sem gravar o cenário real.',
                     'Enquanto a simulação está ativa, o fundo muda para azul e o banner identifica o ambiente temporário para deixar claro que você está num ambiente temporário. O banner azul informa que qualquer mudança será descartada ao encerrar.',
-                    'Você pode pagar uma despesa dentro da sandbox, testar pagar todas, abrir o cofre e criar novas caixinhas temporárias. Quando clicar em Encerrar sandbox ou Cancelar sandbox, o sistema restaura exatamente o estado original salvo no início da sandbox.'
+                    'Você pode pagar uma despesa dentro da simulação, testar pagar todas, abrir o cofre e criar novas caixinhas temporárias. Quando clicar em Encerrar simulação ou Cancelar simulação, o sistema restaura exatamente o estado original salvo no início da simulação.'
                 ]);
 
                 addSection('6. Cofre e caixinhas', [
                     'O cofre concentra as reservas fora do fluxo do dia a dia. Cada caixinha representa um objetivo, com nome, valor, datas opcionais e, se quiser, taxa de juros mensal ou anual.',
                     'Criar uma caixinha ajuda a separar dinheiro para emergência, viagem, equipamentos, impostos ou qualquer objetivo futuro. A plataforma projeta crescimento quando há taxa de juros configurada.',
-                    'No modo sandbox, o comportamento do cofre também entra na sandbox. Isso permite testar resgates e novas distribuições sem comprometer o valor real guardado.'
+                    'No modo de simulação, o comportamento do cofre também entra na simulação. Isso permite testar resgates e novas distribuições sem comprometer o valor real guardado.'
                 ]);
 
                 addSection('7. Importação de planilhas Excel', [
@@ -6995,7 +6995,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: [
                         ['Checkbox da despesa', 'Marca ou desmarca pago', 'Quando a conta foi efetivamente quitada'],
                         ['Ampulheta amarela', 'Define Ainda não', 'Quando a conta existe, mas não será baixada agora'],
-                        ['Modo sandbox', 'Abre uma sandbox descartável', 'Quando quiser testar cenários sem gravar'],
+                        ['Simulação', 'Abre uma simulação descartável', 'Quando quiser testar cenários sem gravar'],
                         ['Seta abrir tudo', 'Expande a lista inteira', 'Quando quiser revisão completa sem paginação'],
                         ['Busca global', 'Encontra itens e reservas', 'Quando não lembrar o mês de um lançamento'],
                         ['Lista cronológica', 'Ordena por agenda ou histórico', 'Quando precisar visualizar sequência temporal'],
@@ -7051,7 +7051,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 checkForSobrasFlow();
             });
 
-            simulationOpenCofreBtn.addEventListener('click', () => {
+            simulationOpenCofreBtn?.addEventListener('click', () => {
                 renderCaixinhas();
                 openModal(cofreModal, simulationOpenCofreBtn);
             });
@@ -7133,6 +7133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         dialog.querySelector('[role=status]').textContent = 'Use um valor positivo dentro do saldo livre do mês.'; return;
                     }
                     pushUndoSnapshot('depósito no cofre');
+                    box=caixinhas.find(c=>c.id===box.id);
                     box.valor = roundToTwo(box.valor + amount);
                     recordVaultTransfer(data, amount, box.id);
                     close(); updateAllUI(); showToast('Dinheiro guardado na caixinha.');
@@ -7205,6 +7206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
 
+                    state.theme=localStorage.getItem('theme')||state.theme||'dark';
                     if(state.theme === 'dark') document.documentElement.classList.add('dark');
                     else document.documentElement.classList.remove('dark');
                     updateThemeIcons(state.theme === 'dark');
@@ -7288,6 +7290,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 input.addEventListener('blur', formatNumberFieldOnBlur);
             });
 
+
+
+            function renderBoxMenu(){
+                const menu=document.getElementById('mlg-box-list');if(!menu)return;
+                const key=getMonthKey(currentDate),previous=new Date(currentDate);previous.setMonth(previous.getMonth()-1);
+                document.getElementById('mlg-box-period').textContent=monthNames[currentDate.getMonth()]+' '+currentDate.getFullYear()+' · saldo trazido do mês anterior';
+                menu.replaceChildren();caixinhas.filter(box=>MLGVault.active(box,key)).forEach(box=>{const b=document.createElement('button'),name=document.createElement('strong'),info=document.createElement('small');b.type='button';name.textContent=box.nome+' · '+formatCurrency(box.valor);info.textContent='Anterior: '+formatCurrency(MLGVault.balance(box,getMonthKey(previous)));b.append(name,info);b.onclick=()=>{document.getElementById('mlg-box-menu').open=false;openModal(cofreModal,b);renderCaixinhas();};menu.append(b);});
+                if(!menu.childElementCount){const empty=document.createElement('p');empty.textContent='Nenhuma caixinha neste mês.';menu.append(empty);}
+            }
+            document.getElementById('mlg-box-create').onclick=e=>{if(isEditLocked){showToast('Edição trancada.');return;}document.getElementById('mlg-box-menu').open=false;openNewCaixinhaEditor(e);};
+            document.getElementById('mlg-box-manage').onclick=e=>{document.getElementById('mlg-box-menu').open=false;openModal(cofreModal,e.currentTarget);renderCaixinhas();};
 
             pinWrapper.style.display = 'none';
             pinWrapper.classList.add('pointer-events-none', 'hidden');

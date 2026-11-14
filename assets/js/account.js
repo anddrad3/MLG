@@ -2,6 +2,7 @@
 (() => {
   const KEY = 'mlg.account.v1';
   let profile;
+  let locking=null, lastTouch=0;
   try { profile = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { profile = null; }
   const encode = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes)));
   const decode = text => Uint8Array.from(atob(text), c => c.charCodeAt(0));
@@ -9,7 +10,11 @@
     const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
     return encode(await crypto.subtle.deriveBits({name:'PBKDF2', salt:decode(salt), iterations:310000, hash:'SHA-256'}, key, 256));
   }
-  function persist() { localStorage.setItem(KEY, JSON.stringify(profile)); }
+  function persist() { localStorage.setItem(KEY, JSON.stringify(profile)); localStorage.setItem('profilePicData',profile.photo||''); window.dispatchEvent(new Event('mlg-profile-change')); }
+  function touch(){const now=Date.now();if(now-lastTouch>1000){sessionStorage.setItem('mlg.lastActive',String(now));lastTouch=now;}}
+  function isUnlocked(){return profile && sessionStorage.getItem('mlg.unlocked')===profile.salt && Date.now()-Number(sessionStorage.getItem('mlg.lastActive')||0)<(profile.idleMinutes||15)*60000;}
+  function enter(){sessionStorage.setItem('mlg.unlocked',profile.salt);touch();document.documentElement.classList.remove('mlg-locked','mlg-boot');}
+  function lock(title='Sessão bloqueada por inatividade'){if(locking)return locking;sessionStorage.removeItem('mlg.unlocked');document.documentElement.classList.add('mlg-locked');window.dispatchEvent(new Event('mlg-session-lock'));locking=passwordDialog(title,false).finally(()=>locking=null);return locking;}
   function passwordDialog(title, cancellable = true) {
     return new Promise(resolve => {
       const dialog = document.createElement('dialog');
@@ -26,7 +31,7 @@
         button.disabled = true;
         try {
           const ok = await derive(dialog.querySelector('input').value, profile.salt) === profile.passwordHash;
-          if (ok) {sessionStorage.setItem('mlg.unlocked', profile.salt); finish(true);}
+          if (ok) {enter(); finish(true);}
           else dialog.querySelector('[role=status]').textContent = 'Senha incorreta.';
         } catch {dialog.querySelector('[role=status]').textContent = 'Não foi possível verificar a senha.';}
         finally {button.disabled = false;}
@@ -52,25 +57,26 @@
         <div><h1>MLG</h1><p class="mlg-subtitle">my life graphs</p></div>
         <div><h2>Seu espaço começa aqui.</h2><p>Crie sua conta neste navegador.</p></div>
         <label>Nome de usuário<input name="username" autocomplete="username" minlength="2" maxlength="60" placeholder="Como podemos chamar você?" required></label>
-        <label>Foto de perfil <span>(opcional)</span><input name="photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+        <div data-photo-picker></div>
         <label>Senha dos aplicativos<input name="password" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Pelo menos 8 caracteres" required></label>
         <label>Confirme a senha<input name="confirm" type="password" minlength="8" autocomplete="new-password" required></label>
         <p role="status" aria-live="polite"></p><button class="mlg-primary">Criar conta e entrar</button>
         <small>Perfil e finanças ficam neste navegador. Limpar os dados do site os remove; exporte seus dados para manter uma cópia.</small>
       </form>`;
       dialog.oncancel = event => event.preventDefault();
+      const chosenPhoto=MLGProfile.photoPicker(dialog.querySelector('[data-photo-picker]'));
       dialog.querySelector('form').onsubmit = async event => {
         event.preventDefault();
-        const form = event.currentTarget, fields = form.elements, button = form.querySelector('button');
+        const form = event.currentTarget, fields = form.elements, button = form.querySelector('.mlg-primary');
         button.disabled = true;
         try {
           if (fields.password.value !== fields.confirm.value) throw new Error('As senhas não coincidem.');
           if (fields.username.value.trim().length < 2) throw new Error('Digite seu nome de usuário.');
           const salt = encode(crypto.getRandomValues(new Uint8Array(16)));
-          profile = {name:fields.username.value.trim(), photo:await photoData(fields.photo.files[0]), salt, passwordHash:await derive(fields.password.value, salt), createdAt:new Date().toISOString()};
+          profile = {name:fields.username.value.trim(), photo:chosenPhoto(), presence:'online', idleMinutes:15, salt, passwordHash:await derive(fields.password.value, salt), createdAt:new Date().toISOString()};
           persist();
           if (profile.photo) localStorage.setItem('profilePicData', profile.photo);
-          sessionStorage.setItem('mlg.unlocked', salt);
+          enter();
           dialog.close(); dialog.remove(); resolve(profile);
         } catch (error) {form.querySelector('[role=status]').textContent = error.message;}
         finally {button.disabled = false;}
@@ -81,6 +87,8 @@
   const ready = new Promise(resolve => {
     const start = async () => {
       if (!profile?.salt || !profile?.passwordHash) await createAccount();
+      else if(!isUnlocked()) await lock('Entrar no MLG');
+      else enter();
       resolve(profile);
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else start();
@@ -90,17 +98,30 @@
     get profile() {return profile;},
     async unlock(title = 'Desbloquear Financeiro', force = false) {
       await ready;
-      if (!force && sessionStorage.getItem('mlg.unlocked') === profile.salt) return true;
+      if (!force && isUnlocked()) return true;
       return passwordDialog(title);
     },
-    async lock() {sessionStorage.removeItem('mlg.unlocked'); await passwordDialog('Entrar no MLG', false);},
+    lock:()=>lock('Entrar no MLG'),
+    openSettings:()=>MLGProfile.openSettings(),
+    async updateProfile(values,currentPassword,newPassword){
+      let salt=profile.salt,passwordHash=profile.passwordHash;
+      if(newPassword){if(newPassword.length<8)throw Error('Use pelo menos 8 caracteres.');if(await derive(currentPassword,salt)!==passwordHash)throw Error('Senha atual incorreta.');salt=encode(crypto.getRandomValues(new Uint8Array(16)));passwordHash=await derive(newPassword,salt);}
+      profile={...profile,...values,salt,passwordHash};persist();enter();
+    },
     updatePhoto(photo) {profile.photo = photo; persist();},
     renderBadge(element) {
       if (!element) return;
       element.replaceChildren(); element.classList.add('mlg-profile-badge');
       const photo = document.createElement('img'); photo.src = profile.photo || '/assets/logo.png'; photo.alt = '';
       const name = document.createElement('span'); name.textContent = profile.name;
-      element.append(photo, name); element.title = 'Seu perfil · MLG';
+      element.append(photo, name); element.title = 'Meu perfil · MLG'; element.dataset.mlgBadge='true';
+      element.onclick=e=>{e.preventDefault();MLGProfile.openSettings();};
+      element.style.setProperty('--presence',MLGProfile.statuses[profile.presence||'online'][1]);
     }
   };
+  function checkIdle(){if(profile&&!locking&&!isUnlocked())lock();}
+  ['pointerdown','keydown','wheel','touchstart'].forEach(type=>document.addEventListener(type,()=>{if(!profile)return;checkIdle();if(!locking)touch();},{passive:true}));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkIdle();});setInterval(checkIdle,15000);
+  window.addEventListener('mlg-profile-change',()=>document.querySelectorAll('[data-mlg-badge]').forEach(el=>MLGAccount.renderBadge(el)));
+  window.addEventListener('storage',e=>{if(e.key===KEY){try{profile=JSON.parse(e.newValue);}catch{}if(!profile){location.href='/';return;}window.dispatchEvent(new Event('mlg-profile-change'));checkIdle();}});
 })();

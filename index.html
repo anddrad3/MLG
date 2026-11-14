@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<style>.mlg-boot #screen,.mlg-boot #main-app-container{visibility:hidden}</style>
+<script>document.documentElement.classList.add("mlg-boot");</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MLG</title>
@@ -20,6 +22,7 @@
 
 <link rel="stylesheet" href="assets/css/home.css">
 <link rel="stylesheet" href="assets/css/mlg.css">
+<script src="assets/js/profile.js" defer></script>
 <script src="assets/js/account.js" defer></script>
 <script src="assets/js/domain.js"></script>
 </head>
@@ -61,11 +64,10 @@
             <label for="theme-switch" class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="theme-switch" class="sr-only peer"><div class="w-11 h-6 bg-[var(--input-bg)] rounded-full peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--accent-blue)]"></div></label>
           </div>
           <div class="border-t border-[var(--border-color)] my-2"></div>
-          <button id="plans-btn" class="settings-action-btn"><i class="fa-solid fa-credit-card w-5 h-5 text-[var(--text-secondary)]"></i><span>Planos e Faturas</span></button>
           <button id="download-desktop-btn" class="settings-action-btn"><i class="fa-solid fa-desktop w-5 h-5 text-[var(--text-secondary)]"></i><span>Baixar para Desktop</span></button>
           <div class="border-t border-[var(--border-color)] my-2"></div>
           <button id="logout-btn" class="settings-action-btn"><i class="fa-solid fa-right-from-bracket w-5 h-5 text-[var(--text-secondary)]"></i><span>Sair</span></button>
-          <button id="delete-account-open-btn" class="settings-action-btn"><i class="fa-solid fa-trash-can w-5 h-5 text-error"></i><span class="text-error font-semibold">Deletar Conta</span></button>
+          <button id="delete-account-open-btn" class="settings-action-btn"><i class="fa-solid fa-trash-can w-5 h-5 text-error"></i><span class="text-error font-semibold">Meu perfil e dados</span></button>
         </div>
       </div>
     </div>

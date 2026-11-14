@@ -7,6 +7,7 @@ test('server protects secrets, requires authorization and validates upstream out
   const upstream=async()=>{calls++;return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({type:'despesas',name:'Internet',amount:120,date:'2026-12-01',installments:1,amountMode:'total'})}]}}]})};};
   const server=createServer(env,upstream);await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{server.closeAllConnections();server.close();});
   const base=`http://127.0.0.1:${server.address().port}`;
+  for(const route of ['/assets/vendor/exceljs.min.js','/assets/js/andrade-layout.js','/assets/js/profile.js','/graphs/'])assert.equal((await fetch(base+route)).status,200);
   const post=(route,data,cookie,origin='http://localhost')=>fetch(base+route,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,...(cookie?{Cookie:cookie}:{})},body:JSON.stringify(data)});
   for(const route of ['/.env','/server/index.cjs','/package.json','/.git/config'])assert.equal((await fetch(base+route)).status,404);
   assert.equal((await post('/api/command',{text:'x'})).status,401);

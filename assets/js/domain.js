@@ -6,7 +6,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
   function importStatus(value) {
-    const text = normalize(value);
+    const text = normalize(value).replace(/[!?.]+/g, '').replace(/[_\s]+/g, ' ').trim();
     if (!text || ['on hold', 'onhold', 'em espera'].includes(text)) return 'on_hold';
     if (['simulacao', 'simulation', 'sandbox'].includes(text)) return 'simulation';
     if (['ainda nao', 'ampulheta', 'scheduled'].includes(text)) return 'scheduled';

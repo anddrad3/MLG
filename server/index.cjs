@@ -99,7 +99,7 @@ function createServer(env = process.env, upstreamFetch = fetch) {
     let pathname;
     try {pathname = decodeURIComponent(url.pathname);} catch {return json(res,400,{error:'Caminho inválido.'});}
     if (pathname.endsWith('/')) pathname += 'index.html';
-    const allowed = /^\/(?:index\.html|(?:financeiro|access|profile|graphs)\/(?:index|financeiro)\.html|assets\/(?:css|js)\/[a-z0-9-]+\.(?:css|js)|assets\/vendor\/xlsx\.full\.min\.js|assets\/logo\.png)$/;
+    const allowed = /^\/(?:index\.html|(?:financeiro|access|profile|graphs)\/(?:index|financeiro)\.html|assets\/(?:css|js)\/[a-z0-9-]+\.(?:css|js)|assets\/vendor\/(?:xlsx\.full|exceljs)\.min\.js|assets\/logo\.png)$/;
     if (!allowed.test(pathname)) return json(res,404,{error:'Arquivo não encontrado.'});
     try {
       const filename = path.join(root,pathname);
