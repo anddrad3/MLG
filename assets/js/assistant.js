@@ -1,9 +1,10 @@
 (() => {
   function init() {
     const panel = document.getElementById('mlg-ai');
-    panel.innerHTML = `<form><span aria-hidden="true">✦</span><input aria-label="Comando para a IA" placeholder="Adicione uma saída de R$ 120 em dezembro para internet…" maxlength="2000" required><button type="button" data-mic aria-label="Ditar comando" aria-pressed="false"><i class="fa-solid fa-microphone"></i></button><button class="mlg-primary" data-send>Enviar</button></form><p role="status" aria-live="polite">Digite ou dite um lançamento. Confira a interpretação antes de adicionar.</p><div class="mlg-ai-review" hidden><span></span><button class="mlg-primary" data-confirm>Adicionar</button><button data-cancel>Cancelar</button></div>`;
+    panel.innerHTML = `<form><span aria-hidden="true">✦</span><input aria-label="Comando para a IA" placeholder="Adicione uma saída de R$ 120 em dezembro para internet…" maxlength="2000" required><button type="button" data-mic aria-label="Ditar comando" aria-pressed="false"><i class="fa-solid fa-microphone"></i></button><button class="mlg-primary" data-send>Enviar</button></form><p role="status" aria-live="polite">Digite ou dite um lançamento. Sem outro mês informado, uso o mês aberto no Financeiro.</p><div class="mlg-ai-review" hidden><span></span><button class="mlg-primary" data-confirm>Adicionar</button><button data-cancel>Cancelar</button></div>`;
     const form = panel.querySelector('form'), input = panel.querySelector('input'), status = panel.querySelector('[role=status]'), review = panel.querySelector('.mlg-ai-review'), send = panel.querySelector('[data-send]'), mic = panel.querySelector('[data-mic]');
-    let pending = null, busy = false;
+    let pending = null, busy = false, resetVersion = 0;
+    window.addEventListener('mlg-finance-reset',()=>{resetVersion++;pending=null;review.hidden=true;input.value='';status.textContent='Financeiro limpo. Nenhum lançamento pendente.';});
     async function api(path, payload) {
       const response = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const data = await response.json();
@@ -29,11 +30,13 @@
     form.onsubmit = async event => {
       event.preventDefault(); if (busy) return;
       busy=true;send.disabled=true;pending=null;review.hidden=true;status.textContent='Interpretando seu comando…';
+      const requestVersion=resetVersion;
       const payload={text:input.value.trim(),referenceDate:MLGFinance.getDate()};
       try {
         let result;
         try {result=await api('/api/command',payload);}
         catch(error){if(error.status!==401)throw error;if(!await authorize()){status.textContent='Conexão cancelada.';return;}result=await api('/api/command',payload);}
+        if(requestVersion!==resetVersion)return;
         pending=MLGDomain.validateCommand(result.command);
         const rows=MLGDomain.installments(pending);
         review.querySelector('span').textContent=`${pending.type==='despesas'?'Saída':'Entrada'} · ${pending.name} · ${rows.length} parcela(s) · total ${rows.reduce((n,r)=>n+r.valor,0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} · início ${pending.date.split('-').reverse().join('/')}`;

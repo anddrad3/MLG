@@ -45,5 +45,15 @@
       return {type:command.type, nome:command.name, valor:amount/100, data:target.toISOString().slice(0,10), monthKey:`${target.getUTCFullYear()}-${target.getUTCMonth()}`, occurrenceIndex:index+1, occurrenceTotal:command.installments};
     });
   }
-  return {normalize, importStatus, exportStatus, cents, validateCommand, installments};
+  function resolveAICommand(raw, referenceDate, text) {
+    const words=normalize(text), typeWord=normalize(raw?.type);
+    const expense=/\b(saida|saidas|gasto|gastos|gastei|gastar|despesa|despesas|paguei|pagar|comprei|compra)\b/.test(words);
+    const income=/\b(entrada|entradas|entrou|entraram|receita|recebi|recebido|ganhei|ganho|a mais|sobrou)\b/.test(words);
+    const aliases={entrada:'entradas',receita:'entradas',income:'entradas',saida:'despesas',gasto:'despesas',expense:'despesas'};
+    const type=['entradas','despesas'].includes(typeWord)?typeWord:aliases[typeWord]||(expense?'despesas':income?'entradas':undefined);
+    const explicitDate=/\b(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro|hoje|amanha|ontem|dia|semana|segunda|terca|quarta|quinta|sexta|sabado|domingo|proxim[oa]|passad[oa]|seguinte|que vem|mes\s+\d{1,2})\b|\d{1,4}[-/]\d{1,2}/.test(words);
+    const date=explicitDate?raw?.date:referenceDate?.slice(0,7)+'-01';
+    return validateCommand({...raw,type,date,name:raw?.name?.trim()||(type==='entradas'?'Entrada extra':type==='despesas'?'Despesa':''),installments:raw?.installments??1,amountMode:raw?.amountMode||'total'});
+  }
+  return {normalize, importStatus, exportStatus, cents, validateCommand, installments, resolveAICommand};
 });

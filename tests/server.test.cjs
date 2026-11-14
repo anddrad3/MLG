@@ -16,5 +16,7 @@ test('server protects secrets, requires authorization and validates upstream out
   const cookie=login.headers.get('set-cookie');assert.match(cookie,/HttpOnly/);assert.match(cookie,/SameSite=Strict/);
   const result=await post('/api/command',{text:'Adicione saída de 120 para internet em dezembro',referenceDate:'2026-11-01'},cookie.split(';')[0]);
   assert.equal(result.status,200);assert.equal((await result.json()).command.amount,120);assert.equal(calls,1);
+  const implicit=await post('/api/command',{text:'Gastei 120 na internet',referenceDate:'2026-11-01'},cookie.split(';')[0]);
+  assert.equal(implicit.status,200);assert.equal((await implicit.json()).command.date,'2026-11-01');
   const config=await (await fetch(base+'/api/config')).text();assert.equal(config.includes(env.GEMINI_API_KEY),false);
 });

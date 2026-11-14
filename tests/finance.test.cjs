@@ -129,3 +129,12 @@ test('deposit, withdrawal and undo conserve money without synthetic income',asyn
   assert.equal(a.state().caixinhas[0].valor,150.25);assert.equal(a.state().financialData['2026-10'].entradas.length,1);
   a.click('undo-action-button');assert.equal(a.state().caixinhas[0].valor,200.5);
 });
+test('clear all requires exact confirmation, preserves profile and cannot restore old data on reload or undo',async t=>{
+ const a=await app(t);a.w.localStorage.setItem('mlg.account.v1','{"name":"Preservado"}');a.w.localStorage.setItem('mlg.notes.v1','Nota da página inicial');
+ a.w.MLGFinance.addCommand({...command('despesas',60),installments:3});a.$('geral-anotacao').value='Nota financeira';a.$('geral-anotacao').dispatchEvent(new a.w.Event('input'));
+ a.click('clear-financial-data-btn');let dialog=a.$('mlg-clear-finance-dialog');assert.equal(dialog.querySelector('[type=submit]').disabled,true);dialog.querySelector('[data-cancel]').click();assert.equal(a.state().financialData['2026-10'].despesas.length,1);
+ a.click('clear-financial-data-btn');dialog=a.$('mlg-clear-finance-dialog');const form=dialog.querySelector('form');form.elements.confirmation.value='APAGAR FINANCEIRO';form.elements.confirmation.dispatchEvent(new a.w.Event('input'));form.dispatchEvent(new a.w.Event('submit',{bubbles:true,cancelable:true}));
+ a.w.document.body.dispatchEvent(new a.w.KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true}));
+ assert.equal(Object.values(a.state().financialData).reduce((n,m)=>n+m.despesas.length+m.entradas.length,0),0);assert.equal(a.state().caixinhas.length,0);assert.equal(a.state().recurringSeries.length,0);assert.equal(a.state().trash.length,0);assert.equal(a.w.localStorage.getItem('mlg.account.v1'),'{"name":"Preservado"}');assert.equal(a.w.localStorage.getItem('mlg.notes.v1'),'Nota da página inicial');
+ const b=await app(t,a.state());assert.equal(b.$('geral-anotacao').value,'');assert.equal(b.w.MLGFinance.exportRows().length,1);
+});

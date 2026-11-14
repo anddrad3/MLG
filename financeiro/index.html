@@ -64,9 +64,9 @@
         <!-- Conteúdo da Aplicação -->
         <div class="w-full h-full relative z-10">
             <!-- Header -->
-            <header class="sheet-panel scroll-morph-stage rounded-[1.75rem] p-4 md:p-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between mb-6">
+            <header class="mlg-finance-header sheet-panel scroll-morph-stage rounded-[1.75rem] p-4 md:p-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between mb-6">
                 <!-- Esquerda: Ações Principais -->
-                <div class="flex flex-wrap items-center justify-center gap-2 xl:justify-start">
+                <div class="mlg-header-navigation flex flex-wrap items-center justify-center gap-2 xl:justify-start">
                     <button class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Voltar">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -86,7 +86,7 @@
                 </div>
 
                 <!-- Centro: Seletor de Mês -->
-                <div class="flex flex-col items-center justify-center gap-3">
+                <div class="mlg-header-center flex flex-col items-center justify-center gap-3">
                     <img src="../assets/logo.png" alt="MLG" class="mlg-finance-logo"><div class="app-brand">
                         <p class="app-brand-title">Financeiro</p>
                         <p class="app-brand-subtitle">Seu comando absoluto do dinheiro</p>
@@ -110,7 +110,7 @@
                 </div>
 
                 <!-- Direita: Ferramentas -->
-                <div class="flex flex-wrap items-center justify-center gap-2 xl:justify-end">
+                <div class="mlg-header-tools flex flex-wrap items-center justify-center gap-2 xl:justify-end">
                     <button id="search-button" class="header-button hidden md:inline-flex text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Buscar registros">
                         <i class="fa-solid fa-magnifying-glass h-5 w-5"></i>
                     </button>
@@ -1114,11 +1114,11 @@
     </div>
 
     <div id="analytics-modal" class="fixed inset-0 z-[90] bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center hidden p-4">
-        <div class="analytics-card w-full max-w-6xl max-h-[92vh] overflow-y-auto">
+        <div class="mlg-analytics-dialog analytics-card w-full max-w-6xl max-h-[92vh] overflow-y-auto">
             <div class="flex items-start justify-between gap-4 p-6 border-b border-gray-200 dark:border-zinc-800">
                 <div>
                     <p class="text-xs uppercase tracking-[0.22em] text-gray-500 dark:text-zinc-400">Visao anual</p>
-                    <h2 class="text-3xl font-bold text-gray-900 dark:text-zinc-100">Graficos e todos os meses em uma tela</h2>
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-zinc-100">Gráficos do seu financeiro</h2>
                     <p class="text-sm text-gray-600 dark:text-zinc-400 mt-1">Analise entradas, despesas, pagamentos, sobras e navegue por qualquer mes do ano atual ou de anos anteriores.</p>
                 </div>
                 <button id="close-analytics-modal-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800 text-gray-800 dark:text-zinc-200" aria-label="Fechar visão anual">
@@ -1126,7 +1126,7 @@
                 </button>
             </div>
             <div class="p-6 space-y-6">
-                <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+                <div class="mlg-analytics-controls flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
                     <div class="inline-flex items-center gap-3">
                         <button id="analytics-prev-year-btn" class="header-button text-gray-900 dark:text-zinc-100 p-3 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-800" aria-label="Ano anterior">
                             <i class="fa-solid fa-chevron-left"></i>
@@ -1139,8 +1139,8 @@
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
-                    <div class="flex flex-col sm:flex-row sm:items-end gap-4">
-                        <p class="text-sm text-gray-600 dark:text-zinc-400 sm:max-w-xs">Clique em um mes abaixo para abrir a planilha correspondente. Nos graficos, voce pode alternar entre o ano inteiro ou um mes especifico.</p>
+                    <div class="mlg-analytics-options flex flex-col sm:flex-row sm:items-end gap-4">
+                        <p class="text-sm text-gray-600 dark:text-zinc-400 sm:max-w-xs">Compare o ano inteiro ou escolha um mês. Clique nos meses abaixo para abrir os lançamentos.</p>
                         <div class="flex flex-col sm:flex-row sm:items-end gap-3">
                             <label class="analytics-filter-shell">
                                 <span>Recorte</span>
@@ -1176,7 +1176,7 @@
                             <p id="analytics-primary-kicker" class="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">Grafico anual</p>
                             <h3 id="analytics-primary-title" class="text-xl font-bold text-gray-900 dark:text-zinc-100">Entradas, despesas e sobras</h3>
                         </div>
-                        <div class="h-80">
+                        <div class="mlg-chart-frame">
                             <canvas id="analytics-year-chart"></canvas>
                         </div>
                     </div>
@@ -1185,7 +1185,7 @@
                             <p id="analytics-secondary-kicker" class="text-xs uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">Mes aberto</p>
                             <h3 id="analytics-secondary-title" class="text-xl font-bold text-gray-900 dark:text-zinc-100">Pago, pendente e sobras</h3>
                         </div>
-                        <div class="h-80">
+                        <div class="mlg-chart-frame">
                             <canvas id="analytics-current-chart"></canvas>
                         </div>
                     </div>
@@ -1219,6 +1219,7 @@
                  <button id="open-timeline-modal-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><i class="fa-solid fa-clock-rotate-left h-5 w-5 text-gray-500"></i><span class="text-gray-800 dark:text-zinc-200">Lista Cronológica</span></button>
                  <button id="export-family-andrade-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-8m0 8l-3-3m3 3l3-3M4 20h16" /></svg><span class="text-gray-800 dark:text-zinc-200">Exportar Excel no Modelo Andrade</span></button>
                  <button id="download-pdf-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg><span class="text-gray-800 dark:text-zinc-200">Baixar PDF Detalhado</span></button>
+                 <button id="clear-financial-data-btn" type="button" class="mlg-clear-finance"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span>Apagar todos os dados financeiros</span></button>
                  <button id="download-manual-pdf-btn" class="w-full text-left p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors flex items-center space-x-3"><i class="fa-solid fa-book-open h-5 w-5 text-gray-500"></i><span class="text-gray-800 dark:text-zinc-200">Manual completo em PDF</span></button>
             </div>
         </div>

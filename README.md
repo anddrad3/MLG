@@ -57,6 +57,11 @@ somente em memória; encerrar ou recarregar a página descarta os testes. O
 histórico de desfazer é independente durante a simulação. Ctrl+Z desfaz ações
 financeiras; dentro de campos de texto, mantém o comportamento de edição nativo.
 
+Em **Configurações → Apagar todos os dados financeiros**, a confirmação digitada
+`APAGAR FINANCEIRO` limpa todos os meses, caixinhas, recorrências, anotações
+financeiras e lixeira. Essa limpeza não é desfeita por Ctrl+Z; perfil e notas da
+página inicial são preservados. O diálogo oferece backup antes da confirmação.
+
 Depósitos e resgates de caixinhas são transferências internas, sem inventar
 receitas. As projeções de rendimento são estimativas e não alteram o saldo.
 O depósito considera o saldo livre após despesas previstas.
@@ -92,6 +97,10 @@ regras de recorrência. Para preservar toda a sessão, copie o armazenamento
 local com a opção **Baixar backup** do perfil antes de limpar o navegador.
 
 ## Gemini e voz
+
+Comandos sem mês usam o mês aberto no Financeiro. A IA aceita expressões como
+“gastei 30 no mercado”, “recebi 100” e “entrou 50 a mais”; datas explícitas têm
+prioridade. A interpretação é exibida para revisão antes de criar lançamentos.
 
 Defina `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_ACCESS_TOKEN` e `PUBLIC_ORIGIN`
 no ambiente do servidor. Veja [implantação no alwaysdata](docs/alwaysdata.md).

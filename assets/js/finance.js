@@ -5618,21 +5618,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                     options: {
                         responsive: true,
+                        devicePixelRatio: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
+                        resizeDelay: 80,
+                        animation: { duration: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? 0 : 180 },
                         maintainAspectRatio: false,
                         indexAxis: isSpecificMonth ? 'y' : 'x',
                         plugins: {
                             legend: {
                                 display: !isSpecificMonth,
-                                labels: { color: palette.text }
+                                labels: { color: palette.text, font: {size:13}, padding:16 }
                             }
                         },
                         scales: {
                             x: {
-                                ticks: { color: palette.text },
+                                ticks: { color: palette.text, font: {size:12}, maxRotation:0 },
                                 grid: { display: !isSpecificMonth, color: palette.grid }
                             },
                             y: {
-                                ticks: { color: palette.text },
+                                ticks: { color: palette.text, font: {size:12}, maxRotation:0 },
                                 grid: { color: palette.grid }
                             }
                         }
@@ -5656,12 +5659,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                     options: {
                         responsive: true,
+                        devicePixelRatio: Math.min(3, Math.max(2, window.devicePixelRatio || 1)),
+                        resizeDelay: 80,
+                        animation: { duration: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? 0 : 180 },
                         maintainAspectRatio: false,
                         cutout: '68%',
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                labels: { color: palette.text }
+                                labels: { color: palette.text, font: {size:13}, padding:16 }
                             }
                         }
                     }
@@ -5785,7 +5791,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 analyticsYear = currentDate.getFullYear();
                 analyticsMonthFilter = 'all';
                 openModal(analyticsModal, opener);
-                setTimeout(updateAnalyticsModal, 20);
+                requestAnimationFrame(() => { if (!analyticsModal.classList.contains("hidden")) updateAnalyticsModal(); });
             }
 
             function syncVisibleAnnotationsToState() {
@@ -6623,6 +6629,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 openAnalyticsPanel(opener);
             });
+            document.getElementById('clear-financial-data-btn').addEventListener('click', () => {
+                if (document.getElementById('mlg-clear-finance-dialog')) return;
+                const dialog=document.createElement('dialog');
+                dialog.id='mlg-clear-finance-dialog';dialog.className='mlg-dialog';
+                dialog.innerHTML='<form class="mlg-account-form"><h2>Apagar todo o Financeiro?</h2><p>Apaga entradas, despesas, parcelas, recorrências, caixinhas, anotações financeiras e lixeira de todos os meses deste navegador. Sua conta, foto, senha e notas da página inicial permanecem.</p><p>Esta ação não pode ser desfeita. Você pode baixar um backup antes.</p><button type="button" data-backup>Baixar backup</button><label>Digite APAGAR FINANCEIRO<input name="confirmation" autocomplete="off" required></label><p role="status"></p><div class="mlg-form-actions"><button type="button" data-cancel>Cancelar</button><button type="submit" class="mlg-clear-confirm" disabled>Apagar tudo do Financeiro</button></div></form>';
+                const form=dialog.querySelector('form'),field=form.elements.confirmation,button=dialog.querySelector('[type=submit]');
+                const close=()=>{dialog.close();dialog.remove();};
+                field.oninput=()=>button.disabled=field.value!=='APAGAR FINANCEIRO';
+                dialog.querySelector('[data-backup]').onclick=()=>MLGProfile.backup();
+                dialog.querySelector('[data-cancel]').onclick=close;
+                dialog.oncancel=e=>{e.preventDefault();close();};
+                form.onsubmit=e=>{
+                    e.preventDefault();if(field.value!=='APAGAR FINANCEIRO')return;
+                    try{localStorage.removeItem('financialControlState');}catch{dialog.querySelector('[role=status]').textContent='Não foi possível acessar o armazenamento. Nada foi alterado.';return;}
+                    while(modalStack.length)closeTopModal();
+                    simulationState={active:false,snapshot:null,startedAt:null,triggerExpenseId:null,triggerMonthKey:null};
+                    financialData={};caixinhas=[];trash=[];recurringSeries=[];editLockRanges=[];isEditLocked=false;
+                    pendingPaymentSnapshot=null;pendingSpreadsheetImport=null;itemParaExcluir=null;caixinhaParaExcluir=null;caixinhaParaRetirar=null;actionAfterPin=null;pendingExpenseStatusSelection=null;pendingInsufficientFundsAction=null;
+                    ['entradas-anotacao','despesas-anotacao','geral-anotacao'].forEach(id=>document.getElementById(id).value='');
+                    resetCalculator(true);updateDisplay();renderCalculatorHistory();
+                    ensureMonthData(getMonthKey(currentDate));undoStack=[];realUndoStack=[];resetHistoryBaseline();
+                    updateEditLockState({save:false});close();updateAllUI();undoStack=[];resetHistoryBaseline();updateUndoButtonState();
+                    window.dispatchEvent(new Event('mlg-finance-reset'));showToast('Todos os dados financeiros foram apagados deste navegador.');
+                };
+                document.body.append(dialog);dialog.showModal();
+            });
+
             document.getElementById('export-family-andrade-btn').addEventListener('click', (event) => {
                 const runExport = () => {
                     closeSettingsModalIfOpen();
