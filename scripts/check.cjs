@@ -2,9 +2,9 @@ const fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('no
 for(const folder of ['assets/js','server','tests','scripts'])for(const name of fs.readdirSync(folder))if(/\.(js|cjs)$/.test(name))execFileSync(process.execPath,['--check',path.join(folder,name)],{stdio:'inherit'});
 for(const file of ['index.html','financeiro/index.html']){
  const html=fs.readFileSync(file,'utf8');
- for(const [,relative] of html.matchAll(/(?:src|href)="([^"#:]+\.(?:js|css|png))"/g)){
+ for(const [,relative] of html.matchAll(/(?:src|href)="([^"#:]+\.(?:js|css|png|svg))"/g)){
   if(relative.startsWith('http'))continue;
-  if(!fs.existsSync(path.resolve(path.dirname(file),relative)))throw Error(`Missing: ${relative}`);
+  if(!fs.existsSync(relative.startsWith('/')?path.resolve(relative.slice(1)):path.resolve(path.dirname(file),relative)))throw Error(`Missing: ${relative}`);
  }
 }
 console.log('JavaScript syntax and local assets OK.');

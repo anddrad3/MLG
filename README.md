@@ -102,7 +102,7 @@ Comandos sem mês usam o mês aberto no Financeiro. A IA aceita expressões como
 “gastei 30 no mercado”, “recebi 100” e “entrou 50 a mais”; datas explícitas têm
 prioridade. A interpretação é exibida para revisão antes de criar lançamentos.
 
-Defina `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_ACCESS_TOKEN` e `PUBLIC_ORIGIN`
+Defina `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_PUBLIC_ENABLED` e `PUBLIC_ORIGIN`
 no ambiente do servidor. Veja [implantação no alwaysdata](docs/alwaysdata.md).
 Para carregar um arquivo `.env` local explicitamente com Node:
 
@@ -110,8 +110,12 @@ Para carregar um arquivo `.env` local explicitamente com Node:
 node --env-file=.env server/index.cjs
 ```
 
-`AI_ACCESS_TOKEN` deve ter pelo menos 24 caracteres aleatórios. É o código de
-acesso dos usuários autorizados à IA; não é a chave Gemini nem a senha local.
+`AI_PUBLIC_ENABLED=true` permite usar a IA sem código de acesso. A sessão
+anônima é criada automaticamente no backend. A chave Gemini nunca é entregue
+ao navegador. O proprietário deve manter o teto de gastos no provedor.
+
+No modo privado (padrão), `AI_ACCESS_TOKEN` pode ser usado por integrações
+autorizadas; o chat não pede nem incorpora essa credencial.
 A sessão usa cookie HttpOnly e SameSite=Strict, com Secure em HTTPS. O servidor
 limita tentativas, valida origem e comandos, impõe timeout e não expõe `.env`,
 fontes do backend ou a chave da API. A chave é enviada ao Google somente pelo
@@ -123,8 +127,8 @@ for por parcela, diga explicitamente “3 parcelas de 200 reais”. Revise a
 interpretação e confirme. Ctrl+Z desfaz todas as parcelas dessa operação.
 
 O microfone grava uma frase de até 30 segundos (500 KB), com permissão do
-navegador e HTTPS. Clique novamente para parar e interpretar, ou em Cancelar
-áudio para descartar. O áudio fica na memória e é enviado ao Google Gemini
+navegador e HTTPS. Use a seta para enviar, a pausa para interromper/continuar e a lixeira
+para descartar. Ao chegar a 30 segundos a gravação pausa, aguardando envio. O áudio fica na memória e é enviado ao Google Gemini
 pelo backend para transcrição e interpretação, usando a mesma chave e cota
 dos comandos escritos. O restante das finanças não é enviado ao modelo.
 
@@ -145,3 +149,40 @@ O projeto conserva módulos demonstrativos do portal original. Recursos sociais
 e demais aplicativos ainda não têm um serviço remoto implementado.
 
 Licença MIT para o projeto; bibliotecas de terceiros conservam suas licenças.
+
+## Chat, imagens e visão anual
+
+O chat fica fixo no Financeiro e reserva espaço para não cobrir os formulários.
+Pesquisa, navegação, notas e abertura das ferramentas podem ser executadas
+localmente: por exemplo, “buscar internet”, “anote: conferir fatura”,
+“abrir dezembro”, “resumo” e “caixinhas”. O Gemini interpreta os demais pedidos
+e devolve uma proposta; operações financeiras e notas exigem confirmação.
+
+Arraste uma imagem ou use o botão de anexo. Somente JPG, PNG e WebP são aceitos
+(até 8 MB antes da conversão). O navegador reduz a imagem, remove metadados e
+a envia como JPEG de até 500 KB. Uma cópia de até 512 pixels fica no lançamento local depois da
+confirmação, para poupar espaço no navegador. O servidor valida tipo, assinatura e tamanho; não armazena mídia.
+
+A visão “Ano completo” mostra os doze meses em uma tabela e cartões compactos,
+com opção de mostrar lançamentos. Clique em um mês para voltar à mesa.
+
+## Proteção da cota pública
+
+No acesso público, o servidor reserva cada chamada antes de contatar o provedor.
+O máximo padrão é 30 chamadas/dia e 200/mês para o site inteiro, persistido em
+`data/ai-usage.json` e protegido contra reservas concorrentes. As variáveis
+`AI_DAILY_REQUEST_LIMIT` e `AI_MONTHLY_REQUEST_LIMIT` permitem reduzir esses
+tetos. Falhas também consomem a reserva. Reiniciar o servidor não zera a cota;
+falha no arquivo de controle bloqueia novas chamadas. Há também validação de origem e sessão e limites de tamanho e frequência.
+
+Esses são limites de quantidade, não uma cobrança em reais. O limite financeiro
+do projeto Google deve continuar configurado: outras aplicações podem consumir
+a mesma cota. O acesso público não é autenticação de identidade e pode sofrer
+uso abusivo até atingir os tetos. Não envie credenciais no chat.
+
+Não existe recuperação da senha local por e-mail. O cadastro informa isso e
+exige ciência. “Esqueci minha senha” explica a exclusão irreversível de perfil,
+finanças e notas e exige digitar `EXCLUIR PERFIL`; cancelar preserva os dados.
+
+Ícone de calculadora: [Font Awesome Free 6.5.2](https://fontawesome.com/),
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

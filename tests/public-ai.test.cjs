@@ -1,0 +1,20 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path');
+const {createServer}=require('../server/index.cjs');
+test('anonymous AI uses an origin-bound session, validates images, hides secrets and stops at persistent quota',async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mlg-public-'));let calls=0,received;
+ const env={GEMINI_API_KEY:'NOT_A_REAL_SECRET',AI_PUBLIC_ENABLED:'true',PUBLIC_ORIGIN:'http://localhost',AI_USAGE_FILE:path.join(dir,'usage.json'),AI_MONTHLY_REQUEST_LIMIT:1};
+ const server=createServer(env,async(url,options)=>{calls++;received=JSON.parse(options.body);return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({type:'despesas',name:'Comprovante',amount:12,date:'2026-11-01',installments:1,amountMode:'total'})}]}}]})};});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>{server.closeAllConnections();server.close();fs.rmSync(dir,{recursive:true,force:true});});
+ const base=`http://127.0.0.1:${server.address().port}`,post=(route,data,cookie,origin=env.PUBLIC_ORIGIN)=>fetch(base+route,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{})},body:JSON.stringify(data)});
+ assert.equal((await post('/api/session',{},null,'https://attacker.invalid')).status,403);
+ const session=await post('/api/session',{});assert.equal(session.status,200);const cookie=session.headers.get('set-cookie').split(';')[0];
+ const payload={text:'Lançar comprovante',referenceDate:'2026-11-01',image:{mimeType:'image/jpeg',data:Buffer.from([255,216,255,0,0,0]).toString('base64')}};
+ assert.equal((await post('/api/command',payload)).status,401);
+ assert.equal((await post('/api/command',{...payload,image:{mimeType:'application/pdf',data:'VEVTVA=='}},cookie)).status,400);
+ assert.equal((await post('/api/command',{...payload,image:{mimeType:'image/jpeg',data:'VEVTVA=='}},cookie)).status,400);assert.equal(calls,0);
+ assert.equal((await post('/api/command',payload,cookie)).status,200);assert.equal(received.contents[0].parts[1].inlineData.mimeType,'image/jpeg');assert.equal(calls,1);
+ assert.equal((await post('/api/command',payload,cookie)).status,429);assert.equal(calls,1);
+ const config=await(await fetch(base+'/api/config')).text();assert.match(config,/"publicAI":true/);assert.equal(config.includes(env.GEMINI_API_KEY),false);
+ for(const route of ['/data/ai-usage.json','/server/budget.cjs','/.env'])assert.equal((await fetch(base+route)).status,404);
+ assert.equal((await fetch(base+'/assets/icons/finance.svg')).headers.get('content-type'),'image/svg+xml');
+});

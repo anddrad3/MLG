@@ -30,3 +30,12 @@ test('audio is authenticated, bounded and sent inline; spoken explicit dates ove
  assert.equal((await post('/api/command',{...payload,audio:{...payload.audio,durationMs:31000}},cookie)).status,400);assert.equal(calls,0);
  const reply=await post('/api/command',payload,cookie),body=await reply.json();assert.equal(reply.status,200);assert.equal(body.command.date,'2026-12-01');assert.equal(body.transcript,'Gastei 25 no mercado em dezembro');assert.equal(received.contents[0].parts[1].inlineData.mimeType,'audio/webm');assert.equal(calls,1);
 });
+test('nonfinancial AI actions return a bounded intent and invalid calendar dates are rejected',async t=>{
+ const env={GEMINI_API_KEY:'TEST_ONLY',AI_ACCESS_TOKEN:'test-action-code-32-characters',PUBLIC_ORIGIN:'http://localhost'};
+ const server=createServer(env,async(url,options)=>{const command=JSON.parse(JSON.parse(options.body).contents[0].parts[0].text).command;return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:JSON.stringify({action:'search',query:'Internet',date:command==='invalid'?'2026-02-30':'2026-11-01'})}]}}]})};});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>{server.closeAllConnections();server.close();});
+ const base=`http://127.0.0.1:${server.address().port}`,post=(route,data,cookie)=>fetch(base+route,{method:'POST',headers:{Origin:env.PUBLIC_ORIGIN,'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{})},body:JSON.stringify(data)});
+ const login=await post('/api/session',{accessCode:env.AI_ACCESS_TOKEN}),cookie=login.headers.get('set-cookie').split(';')[0];
+ const response=await post('/api/command',{text:'Procure minha internet',referenceDate:'2026-11-01'},cookie);assert.equal(response.status,200);assert.deepEqual(await response.json(),{action:'search',query:'Internet',date:'2026-11-01'});
+ assert.equal((await post('/api/command',{text:'invalid',referenceDate:'2026-11-01'},cookie)).status,422);
+});

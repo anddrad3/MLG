@@ -19,8 +19,9 @@
     return new Promise(resolve => {
       const dialog = document.createElement('dialog');
       dialog.className = 'mlg-dialog';
-      dialog.innerHTML = '<form class="mlg-account-form"><h2></h2><label>Sua senha<input type="password" autocomplete="current-password" required></label><p role="status"></p><div class="mlg-form-actions"><button type="button" data-cancel>Cancelar</button><button class="mlg-primary">Desbloquear</button></div></form>';
+      dialog.innerHTML = '<form class="mlg-account-form"><h2></h2><label>Sua senha<input type="password" autocomplete="current-password" required></label><button type="button" data-forgot class="mlg-forgot">Esqueci minha senha</button><p role="status"></p><div class="mlg-form-actions"><button type="button" data-cancel>Cancelar</button><button class="mlg-primary">Desbloquear</button></div></form>';
       dialog.querySelector('h2').textContent = title;
+      dialog.querySelector('[data-forgot]').onclick=()=>MLGProfile.forgotPassword();
       const finish = result => {dialog.close(); dialog.remove(); resolve(result);};
       dialog.querySelector('[data-cancel]').hidden = !cancellable;
       dialog.querySelector('[data-cancel]').onclick = () => finish(false);
@@ -60,7 +61,7 @@
         <div data-photo-picker></div>
         <label>Senha dos aplicativos<input name="password" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Pelo menos 8 caracteres" required></label>
         <label>Confirme a senha<input name="confirm" type="password" minlength="8" autocomplete="new-password" required></label>
-        <p role="status" aria-live="polite"></p><button class="mlg-primary">Criar conta e entrar</button>
+        <p class="mlg-password-warning">Guarde esta senha. Não existe recuperação por e-mail: ela fica somente neste navegador. Se esquecer, será necessário excluir o perfil e seus dados locais para recomeçar.</p><label class="mlg-ack"><input type="checkbox" name="understood" required> Entendi e vou guardar minha senha em um local seguro.</label><p role="status" aria-live="polite"></p><button class="mlg-primary">Criar conta e entrar</button>
         <small>Perfil e finanças ficam neste navegador. Limpar os dados do site os remove; exporte seus dados para manter uma cópia.</small>
       </form>`;
       dialog.oncancel = event => event.preventDefault();

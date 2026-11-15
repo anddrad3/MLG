@@ -187,6 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.querySelectorAll('.sensitive-data').forEach(el => {
                     el.classList.toggle('blur-md', isDataLocked);
                 });
+                window.dispatchEvent(new Event('mlg-finance-change'));
             }
             function lockData() { isDataLocked = true; visibilityLock.classList.remove('opacity-0','pointer-events-none'); updateVisibilityButton(); applySensitiveBlurState(); srAnnouncer.textContent = 'Dados financeiros ocultados.'; saveState(); }
             function unlockData() { isDataLocked = false; visibilityLock.classList.add('opacity-0','pointer-events-none'); updateVisibilityButton(); applySensitiveBlurState(); srAnnouncer.textContent = 'Dados financeiros revelados.'; saveState(); }
@@ -1317,6 +1318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     monthButton.addEventListener('click', () => {
                         applySelectedDate(calendarGridYear, index);
                         closeTopModal();
+                        if(!datePickerModal.classList.contains('hidden'))populateDatePicker();
                     });
 
                     calendarGridMonths.appendChild(monthButton);
@@ -1379,8 +1381,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             document.getElementById('confirm-date-picker').addEventListener('click', () => {
                 applySelectedDate(tempSelectedYear, tempSelectedMonth);
+                if(!calendarGridModal.classList.contains('hidden'))closeTopModal();
                 closeTopModal();
             });
+            document.getElementById('date-picker-cancelar-btn').addEventListener('click',()=>{if(!calendarGridModal.classList.contains('hidden'))closeTopModal();},true);
 
             // --- LÓGICA DO FLUXO DE SOBRAS ---
             const sobrasModal = document.getElementById('sobras-modal');
@@ -7343,11 +7347,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             MLGAccount.renderBadge(document.getElementById('mlg-profile'));
             document.querySelector('[aria-label="Voltar"]').addEventListener('click', () => location.href = '/');
             window.MLGFinance = {
+                isPrivate:()=>isDataLocked,
+                getYear(year){return Array.from({length:12},(_,month)=>({month,metrics:getMonthMetrics(`${year}-${month}`),data:getMonthDataSnapshot(`${year}-${month}`)}));},
+                goTo(date){const next=parseDateOnly(date);if(!next||!Number.isFinite(+next))throw Error('Data inválida.');currentDate=new Date(next.getFullYear(),next.getMonth(),1);updateAllUI();},
+                search(query){if(isDataLocked)throw Error('Revele os dados pelo ícone de privacidade antes de pesquisar.');globalSearchInput.value=String(query).slice(0,200);openSearchPanel(document.getElementById('mlg-ai'));},
+                addNote(text){if(isEditLocked)throw Error('Edição trancada.');const data=ensureMonthData(getMonthKey(currentDate));pushUndoSnapshot('anotação por chat');data.geralAnotacao=[data.geralAnotacao,String(text).slice(0,2000)].filter(Boolean).join('\n');updateAllUI();},
                 dockCalculator(docked,container){calculatorDocked=docked;modalStack=modalStack.filter(m=>m.element!==calculatorWindow);document.body.classList.toggle("modal-open",modalStack.length>0);document.body.classList.remove("calculator-only");container.append(calculatorWindow);calculatorWindow.classList.toggle("hidden",!docked);calculatorWindow.classList.toggle("is-docked",docked);saveState();},
                 getDate: () => formatDateOnly(currentDate),
                 exportRows: () => buildPortableExportRows(),
                 exportNotes: () => buildPortableNoteRows(),
-                addCommand(raw) {
+                addCommand(raw,photo='') {
                     if (isEditLocked) throw new Error('Edição trancada.');
                     const rows = MLGDomain.installments(raw);
                     if (rows.some(row => isDateEditLocked(parseDateOnly(row.data)))) throw new Error('Uma das parcelas está em um mês trancado.');
@@ -7355,6 +7364,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     rows.forEach(row => {
                         const item = createStandaloneItem(row.type, row);
                         Object.assign(item, {occurrenceIndex:row.occurrenceIndex, occurrenceTotal:row.occurrenceTotal});
+                        if(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(photo)&&photo.length<700000)item.foto=photo;
                         ensureMonthData(row.monthKey)[row.type].push(item);
                     });
                     currentDate = parseDateOnly(rows[0].data); currentDate.setDate(1);

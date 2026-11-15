@@ -16,3 +16,10 @@ test('expired session hides app and requires existing password; closing profile 
  w.sessionStorage.setItem('mlg.lastActive',String(Date.now()-61000));w.document.body.dispatchEvent(new w.Event('pointerdown',{bubbles:true}));assert.equal(w.document.documentElement.classList.contains('mlg-locked'),true);assert.equal(w.sessionStorage.getItem('mlg.unlocked'),null);assert.match(w.document.querySelector('dialog').textContent,/inatividade/);
  const form=w.document.querySelector('dialog form');form.querySelector('input').value='OriginalTest!';await form.onsubmit({preventDefault(){}});assert.equal(w.document.documentElement.classList.contains('mlg-locked'),false);
 });
+test('forgot password explains loss, requires exact deletion phrase, and cancellation preserves profile and finances',async t=>{
+ const w=await account(t),before=w.localStorage.getItem('financialControlState');w.MLGProfile.forgotPassword();
+ const d=w.document.querySelector('.mlg-forgot-dialog');assert.match(d.textContent,/não há redefinição por e-mail/);assert.equal(d.querySelector('[type=submit]').disabled,true);
+ const input=d.querySelector('input');input.value='EXCLUIR';input.oninput();assert.equal(d.querySelector('[type=submit]').disabled,true);
+ input.value='EXCLUIR PERFIL';input.oninput();assert.equal(d.querySelector('[type=submit]').disabled,false);
+ d.querySelector('[data-back]').click();assert.equal(w.localStorage.getItem('financialControlState'),before);assert.ok(w.localStorage.getItem('mlg.account.v1'));
+});

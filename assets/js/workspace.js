@@ -8,7 +8,8 @@
     const slot=document.createElement('aside');slot.id='mlg-work-calculator';slot.setAttribute('aria-label','Calculadora da mesa');wrapper.append(slot);
     const toolbar=document.createElement('div');toolbar.className='mlg-work-toolbar';toolbar.innerHTML='<div><strong>Seu mês em foco</strong><small>Contas, notas e cálculos no mesmo lugar.</small></div><div class="mlg-view-switch" role="group" aria-label="Visualização do Financeiro"><button type="button" data-view="overview">Visão geral</button><button type="button" data-view="desk">Mesa de trabalho</button></div>';
     document.getElementById('indicators-grid').before(toolbar);
-    function setView(mode){const desk=mode==='desk';document.body.classList.toggle('mlg-desk',desk);toolbar.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===mode)));columnNotes.forEach(d=>d.open=!desk);MLGFinance.dockCalculator(desk,desk?slot:document.body);slot.hidden=!desk;try{localStorage.setItem('mlg.financeView',mode);}catch{};}
+    const yearButton=document.createElement('button');yearButton.type='button';yearButton.dataset.view='year';yearButton.textContent='Ano completo';toolbar.querySelector('.mlg-view-switch').append(yearButton);
+    function setView(mode){const desk=mode==='desk';document.body.classList.toggle('mlg-desk',desk);document.body.classList.toggle('mlg-year',mode==='year');toolbar.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===mode)));columnNotes.forEach(d=>d.open=!desk);MLGFinance.dockCalculator(desk,desk?slot:document.body);slot.hidden=!desk;try{localStorage.setItem('mlg.financeView',mode);}catch{};window.dispatchEvent(new Event('mlg-view-change'));}
     toolbar.addEventListener('click',e=>{const b=e.target.closest('[data-view]');if(b)setView(b.dataset.view);});
     setView(localStorage.getItem('mlg.financeView')||'desk');
   }

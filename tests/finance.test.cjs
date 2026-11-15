@@ -24,6 +24,27 @@ async function app(t,state){
   return {w,$,state:()=>JSON.parse(w.localStorage.getItem('financialControlState')),click:id=>$(id).click()};
 }
 const command=(type,amount)=>({type,name:type==='entradas'?'Receita teste':'Conta teste',amount,date:'2026-11-05',installments:1,amountMode:'total'});
+test('redesign preserves ten aligned header controls, nested calendars and a live twelve-month overview',async t=>{
+ const a=await app(t);a.w.MLGFinance.addCommand(command('entradas',100));a.w.MLGFinance.addCommand(command('despesas',25));
+ a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));a.w.eval(fs.readFileSync('assets/js/finance-design.js','utf8'));
+ assert.equal(a.w.document.querySelector('.mlg-header-navigation').children.length,5);assert.equal(a.w.document.querySelector('.mlg-header-tools').children.length,5);
+ assert.equal(a.$('search-button').hidden,true);assert.equal(a.$('mlg-profile').closest('header'),null);assert.equal(a.$('calendar-grid-modal').parentElement.id,'date-picker-modal');
+ a.w.document.querySelector('[data-view=year]').click();assert.equal(a.w.document.querySelectorAll('.mlg-month-mini').length,12);assert.match(a.w.document.querySelector('.mlg-annual-table').textContent,/100,00/);
+ a.w.MLGFinance.addCommand(command('despesas',5));assert.equal(a.w.MLGFinance.getYear(2026)[10].metrics.despesas,30);
+ a.w.MLGFinance.addNote('Nota do chat');assert.match(a.$('geral-anotacao').value,/Nota do chat/);
+});
+test('chat uses local search and notes without model calls and rejects non-image attachments',async t=>{
+ const a=await app(t);let requests=0;a.w.fetch=async()=>{requests++;throw Error('Unexpected network');};a.w.MLGVoice={attach:()=>({isActive:()=>false})};
+ a.w.eval(fs.readFileSync('assets/js/assistant.js','utf8'));const input=a.w.document.querySelector('#mlg-ai textarea'),form=a.w.document.querySelector('#mlg-ai form');
+ input.value='buscar internet';form.dispatchEvent(new a.w.Event('submit',{cancelable:true}));assert.equal(a.$('global-search-input').value,'internet');assert.equal(a.$('search-modal').classList.contains('hidden'),false);
+ input.value='anote: conferir pagamento';form.dispatchEvent(new a.w.Event('submit',{cancelable:true}));a.w.document.querySelector('[data-confirm]').click();assert.match(a.$('geral-anotacao').value,/conferir pagamento/);assert.equal(requests,0);
+ await a.$('mlg-ai').ondrop({preventDefault(){},dataTransfer:{files:[new a.w.File(['pdf'],'fake.pdf',{type:'application/pdf'})]}});assert.match(a.w.document.querySelector('#mlg-ai [role=status]').textContent,/Só aceito imagens/);assert.equal(requests,0);
+});
+test('image attached to an AI command survives serialization and undo removes the complete operation',async t=>{
+ const a=await app(t),photo='data:image/jpeg;base64,/9j/VEVTVA==';a.w.MLGFinance.addCommand({...command('despesas',50),installments:2},photo);
+ assert.equal(a.state().financialData['2026-10'].despesas[0].foto,photo);assert.equal(a.state().financialData['2026-11'].despesas[0].foto,photo);
+ a.w.document.body.dispatchEvent(new a.w.KeyboardEvent('keydown',{key:'z',ctrlKey:true,bubbles:true}));assert.equal(a.state().financialData['2026-10']?.despesas?.length||0,0);
+});
 test('notes save on input and survive a fresh application instance',async t=>{
   const a=await app(t);a.$('geral-anotacao').value='Salvar sem clicar';a.$('geral-anotacao').dispatchEvent(new a.w.Event('input'));
   const b=await app(t,a.state());assert.equal(b.$('geral-anotacao').value,'Salvar sem clicar');
