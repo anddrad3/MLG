@@ -4,12 +4,22 @@
   const $=id=>document.getElementById(id),header=document.querySelector('.mlg-finance-header');
   document.body.classList.add('mlg-finance');
   const top=document.createElement('div');top.className='mlg-topline';
-  top.innerHTML='<a href="/" class="mlg-home-link">MLG <span>/ seu financeiro</span></a>';
+  top.innerHTML='<div class="mlg-app-identity"></div>';
   top.append($('mlg-profile'));header.before(top);
   const search=$('search-button');search.hidden=true;search.setAttribute('aria-hidden','true');search.tabIndex=-1;document.body.append(search);
   document.querySelector('.mlg-header-navigation').append($('timeline-button'));
   const logo=document.querySelector('.mlg-finance-logo'),home=document.createElement('a');home.href='/';home.className='mlg-finance-symbol';home.setAttribute('aria-label','Voltar à página inicial do MLG');home.innerHTML='<i class="fa-solid fa-calculator" aria-hidden="true"></i>';logo.replaceWith(home);
-  const tools=document.createElement('div');tools.className='mlg-money-tools';tools.innerHTML='<span><i class="fa-solid fa-seedling" aria-hidden="true"></i> Seus investimentos</span>';tools.append($('mlg-box-menu'));document.querySelector('.mlg-work-toolbar').after(tools);
+  const identity=top.querySelector('.mlg-app-identity'),center=document.querySelector('.mlg-header-center'),brand=center.querySelector('.app-brand'),month=$('date-display').parentElement,toolbar=document.querySelector('.mlg-work-toolbar'),views=toolbar.querySelector('.mlg-view-switch');
+  identity.append(home,brand);center.append(views);
+  const context=document.createElement('div');context.className='mlg-context-row';month.classList.add('mlg-month-navigation');context.append(month);
+  const tools=document.createElement('div');tools.className='mlg-money-tools';tools.append($('mlg-box-menu'));context.append(tools);header.after(context);
+  // Keep the original switch listener attached while moving its entire container.
+  toolbar.replaceChildren(views);center.append(toolbar);
+  header.setAttribute('aria-label','Visualização e ferramentas');
+  header.querySelectorAll('.header-button').forEach(button=>{if(!button.title)button.title=button.getAttribute('aria-label')||'';});
+  const shortLabels={entradas:'Entradas',despesas:'Saídas',pago:'Pago',falta:'Pendente','falta-pagar':'Diferença',sobras:'Sobras',cofre:'Investimentos',alocado:'Alocado'};
+  document.querySelectorAll('#indicators-grid [data-indicator]').forEach(button=>{button.parentElement.querySelector('h3').dataset.short=shortLabels[button.dataset.indicator];});
+  const date=$('date-display');date.tabIndex=0;date.setAttribute('role','button');date.setAttribute('aria-haspopup','dialog');date.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();date.click();}});
   const picker=$('date-picker-modal'),pickerTitle=picker.querySelector('h2');pickerTitle.append($('open-calendar-grid-btn'));picker.append($('calendar-grid-modal'));
   document.querySelectorAll('[id$="-modal"].fixed').forEach(modal=>{
     modal.classList.add('mlg-overlay');modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');

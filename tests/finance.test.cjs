@@ -166,3 +166,45 @@ test('workspace keeps one notes editor and calculator keyboard does not consume 
  const number=a.$('calculator-window').querySelector('[data-key="2"]');number.focus();for(const key of ['2','+','3','Enter'])number.dispatchEvent(new a.w.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true}));assert.equal(a.$('calculator-display').textContent,'5');
  a.w.document.querySelector('[data-view="overview"]').click();assert.equal(a.$('calculator-window').parentElement,a.w.document.body);assert.equal(a.state().financialData['2026-10'].geralAnotacao,'Planejamento');assert.equal(a.w.document.querySelectorAll('#calculator-window').length,1);
 });
+
+test('compact workspace preserves editors and controls while switching panels and views',async t=>{
+ const a=await app(t),note=a.$('geral-anotacao'),calculator=a.$('calculator-window'),month=a.$('date-display'),boxes=a.$('mlg-box-menu');
+ a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));a.w.eval(fs.readFileSync('assets/js/finance-design.js','utf8'));
+ const q=selector=>a.w.document.querySelector(selector),workspace=a.$('mlg-workspace');
+ assert.equal(q('.mlg-header-center .mlg-view-switch'),q('.mlg-view-switch'));
+ assert.equal(q('.mlg-context-row #date-display'),month);assert.equal(q('.mlg-context-row #mlg-box-menu'),boxes);
+ note.value='Notas mantidas ao trocar de painel';note.dispatchEvent(new a.w.Event('input'));
+ for(const panel of ['notes','calculator','ledger','notes']){
+  q(`[data-desk-panel="${panel}"]`).click();assert.equal(workspace.dataset.panel,panel);
+  assert.equal(q('#mlg-desk-tabs [aria-pressed="true"]').dataset.deskPanel,panel);
+  assert.equal(a.$('geral-anotacao'),note);assert.equal(a.$('calculator-window'),calculator);
+ }
+ assert.equal(note.value,'Notas mantidas ao trocar de painel');
+ a.click('calculator-button');assert.equal(workspace.dataset.panel,'calculator');
+ for(const view of ['year','overview','desk']){
+  q(`[data-view="${view}"]`).click();assert.equal(q('.mlg-view-switch [aria-pressed="true"]').dataset.view,view);
+  assert.equal(a.w.document.body.classList.contains('mlg-desk'),view==='desk');
+  assert.equal(a.w.document.body.classList.contains('mlg-year'),view==='year');
+ }
+ assert.equal(calculator.parentElement.id,'mlg-work-calculator');assert.equal(a.w.document.querySelectorAll('#geral-anotacao').length,1);
+ month.dispatchEvent(new a.w.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+ assert.equal(a.$('date-picker-modal').classList.contains('hidden'),false);
+});
+
+test('floating chat opens results and keeps unconfirmed changes visible without losing its composer',async t=>{
+ const a=await app(t);let requests=0;a.w.fetch=async()=>{requests++;throw Error('Unexpected network');};a.w.MLGVoice={attach:()=>({isActive:()=>false})};
+ a.w.eval(fs.readFileSync('assets/js/assistant.js','utf8'));
+ const q=selector=>a.$('mlg-ai').querySelector(selector),response=q('.mlg-chat-response'),toggle=q('[data-chat-toggle]'),composer=q('form'),input=q('textarea');
+ assert.equal(response.hidden,true);assert.equal(toggle.getAttribute('aria-expanded'),'false');assert.equal(composer.hidden,false);
+ toggle.click();assert.equal(response.hidden,false);assert.equal(toggle.getAttribute('aria-expanded'),'true');
+ q('[data-chat-close]').click();assert.equal(response.hidden,true);assert.equal(composer.hidden,false);
+ input.value='anote: revisar parcelas';composer.dispatchEvent(new a.w.Event('submit',{cancelable:true}));
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(response.hidden,false);assert.equal(toggle.getAttribute('aria-expanded'),'true');assert.equal(q('.mlg-ai-review').hidden,false);
+ q('[data-chat-close]').click();assert.equal(response.hidden,false);assert.equal(q('.mlg-ai-review').hidden,false);assert.equal(a.$('geral-anotacao').value,'');
+ q('[data-confirm]').click();await new Promise(resolve=>setImmediate(resolve));assert.match(a.$('geral-anotacao').value,/revisar parcelas/);
+ q('[data-chat-close]').click();assert.equal(response.hidden,true);assert.equal(q('form'),composer);assert.equal(composer.hidden,false);
+ input.value='anote: não salvar';composer.dispatchEvent(new a.w.Event('submit',{cancelable:true}));await new Promise(resolve=>setImmediate(resolve));
+ q('[data-cancel]').click();await new Promise(resolve=>setImmediate(resolve));q('[data-chat-close]').click();
+ assert.equal(response.hidden,true);assert.doesNotMatch(a.$('geral-anotacao').value,/não salvar/);assert.equal(requests,0);
+});

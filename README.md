@@ -6,6 +6,14 @@ MLG abre no cadastro local com nome, foto e senha. O módulo Financeiro oferece
 entradas, despesas, recorrências, parcelas, calendário, calculadora, cofre,
 caixinhas, anotações, gráficos, importação/exportação e uma área de simulação.
 
+O Financeiro usa uma tela fixa, sem rolagem da página. Listas, notas, histórico
+e janelas extensas rolam apenas dentro dos próprios painéis, sem barras visíveis.
+A **Mesa de trabalho** reúne contas, notas e calculadora no computador; em telas
+estreitas, abas alternam os mesmos painéis sem duplicar nem perder seus dados.
+A IA permanece em uma cápsula flutuante: respostas se expandem acima dela,
+sem reservar um rodapé. Confirmações ficam abertas até confirmar ou cancelar.
+Os temas claro/escuro e a preferência por movimento reduzido são respeitados.
+
 ## Executar
 
 Requer Node.js 22 ou superior. O servidor de produção não precisa de pacotes npm.
