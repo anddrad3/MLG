@@ -422,11 +422,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 if (!simulationBannerCopy) return;
                 if (!simulationState.active) {
-                    simulationBannerCopy.textContent = 'Teste pagamentos, cofre, caixinhas e alocação para o próximo mês sem gravar de verdade. Ao encerrar, tudo volta exatamente ao estado anterior.';
+                    simulationBannerCopy.textContent = 'Teste alterações sem salvar. Encerrar descarta todo o cenário.';
                     return;
                 }
                 const monthLabel = getMonthLabelFromKey(simulationState.triggerMonthKey || getMonthKey(currentDate)) || `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-                simulationBannerCopy.textContent = `Simulação ativa em ${monthLabel}. Você pode testar pagamentos, criar caixinhas, usar o cofre e fechar o mês inteiro. Ao clicar em "Encerrar simulação", todo esse cenário é descartado na hora.`;
+                simulationBannerCopy.textContent = `Alterações temporárias em ${monthLabel}. Encerrar descarta todo o cenário.`;
             }
 
             function startSimulationMode(item = null) {
@@ -5230,6 +5230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             };
                             closeTopModal();
                             updateAllUI();
+                            window.dispatchEvent(new CustomEvent('mlg-show-transaction', {detail: {type: result.type}}));
                             setTimeout(() => {
                                 const card = document.querySelector(`[data-id="${result.id}"][data-type="${result.type}"]`);
                                 if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -5362,6 +5363,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
                 closeTopModal();
                 updateAllUI();
+                window.dispatchEvent(new CustomEvent('mlg-show-transaction', {detail: {type: entry.type}}));
                 setTimeout(() => {
                     const card = document.querySelector(`[data-id="${entry.id}"][data-type="${entry.type}"]`);
                     if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });

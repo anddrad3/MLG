@@ -8,8 +8,12 @@ caixinhas, anotações, gráficos, importação/exportação e uma área de simu
 
 O Financeiro usa uma tela fixa, sem rolagem da página. Listas, notas, histórico
 e janelas extensas rolam apenas dentro dos próprios painéis, sem barras visíveis.
-A **Mesa de trabalho** reúne contas, notas e calculadora no computador; em telas
-estreitas, abas alternam os mesmos painéis sem duplicar nem perder seus dados.
+A **Mesa de trabalho** reúne contas, notas e calculadora no computador. A coluna
+de contas alterna entre Entradas e Despesas, usando toda a altura disponível.
+Em telas estreitas, abas alternam os mesmos painéis sem duplicar nem perder seus
+dados. A visão anual exibe os 12 meses sem rolagem: matriz no computador e
+cartões com seletor de indicador em telas menores. Selecione um mês para abrir
+seus lançamentos. O card de simulação mantém todas as ações sem rolagem própria.
 A IA permanece em uma cápsula flutuante: respostas se expandem acima dela,
 sem reservar um rodapé. Confirmações ficam abertas até confirmar ou cancelar.
 Os temas claro/escuro e a preferência por movimento reduzido são respeitados.

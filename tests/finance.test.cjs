@@ -208,3 +208,37 @@ test('floating chat opens results and keeps unconfirmed changes visible without 
  q('[data-cancel]').click();await new Promise(resolve=>setImmediate(resolve));q('[data-chat-close]').click();
  assert.equal(response.hidden,true);assert.doesNotMatch(a.$('geral-anotacao').value,/não salvar/);assert.equal(requests,0);
 });
+
+test('desk ledger tabs retain transactions and notes and reveal searched items',async t=>{
+ const a=await app(t);a.w.MLGFinance.addCommand(command('entradas',1000));a.w.MLGFinance.addCommand(command('despesas',100));
+ a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));
+ const q=s=>a.w.document.querySelector(s),income=a.$('mlg-ledger-entradas'),expenses=a.$('mlg-ledger-despesas');
+ assert.equal(income.hidden,true);assert.equal(expenses.hidden,false);
+ const incomeNote=a.$('entradas-anotacao');incomeNote.value='Nota mantida';incomeNote.dispatchEvent(new a.w.Event('input'));
+ q('[data-ledger=entradas]').click();assert.equal(income.hidden,false);assert.equal(expenses.hidden,true);income.querySelector('.item-entry-card').click();
+ q('[data-ledger=entradas]').dispatchEvent(new a.w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));
+ assert.equal(q('.mlg-ledger-tabs [aria-selected=true]').dataset.ledger,'despesas');assert.equal(a.w.document.activeElement.dataset.ledger,'despesas');assert.equal(income.querySelector('.is-selected'),null);a.w.document.body.dispatchEvent(new a.w.KeyboardEvent('keydown',{key:'Delete',bubbles:true}));assert.equal(a.$('delete-item-modal').classList.contains('hidden'),true);
+ q('[data-view=overview]').click();assert.equal(income.hidden,false);assert.equal(expenses.hidden,false);
+ q('[data-view=desk]').click();assert.equal(income.hidden,true);assert.equal(expenses.hidden,false);assert.equal(a.$('entradas-anotacao'),incomeNote);assert.equal(incomeNote.value,'Nota mantida');
+ a.w.MLGFinance.search('Receita teste');a.w.document.querySelector('#global-search-results .search-result-card').click();
+ assert.equal(income.hidden,false);assert.equal(expenses.hidden,true);assert.equal(a.$('mlg-workspace').dataset.panel,'ledger');
+ assert.equal(a.state().financialData['2026-10'].entradas.length,1);assert.equal(a.state().financialData['2026-10'].despesas.length,1);
+ a.click('simulation-mode-toggle-btn');assert.equal(expenses.hidden,false);assert.equal(income.hidden,true);
+ a.click('simulation-end-btn');assert.equal(a.state().financialData['2026-10'].entradas.length,1);
+});
+
+test('compact annual view compares all twelve months, changes metrics and preserves privacy and navigation',async t=>{
+ const a=await app(t);a.w.MLGFinance.addCommand(command('entradas',1200));a.w.MLGFinance.addCommand(command('despesas',75));
+ a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));a.w.eval(fs.readFileSync('assets/js/finance-design.js','utf8'));
+ const q=s=>a.w.document.querySelector(s);q('[data-view=year]').click();
+ assert.equal(q('.mlg-annual-table').querySelectorAll('tbody tr').length,5);
+ assert.equal(q('.mlg-annual-table').querySelectorAll('tbody td').length,60);
+ const metric=q('[data-metric]');metric.value='despesas';metric.dispatchEvent(new a.w.Event('change'));
+ assert.equal(a.w.document.querySelectorAll('.mlg-month-mini').length,12);
+ assert.equal(a.w.document.querySelectorAll('.mlg-month-value')[10].textContent,'75,00');
+ assert.match(a.w.document.querySelectorAll('.mlg-month-open')[10].getAttribute('aria-label'),/Saídas/);
+ q('[data-prev]').click();assert.equal(q('[data-year]').textContent,'2025');q('[data-next]').click();assert.equal(q('[data-year]').textContent,'2026');
+ a.click('toggle-visibility-button');assert.equal(q('[data-private]').hidden,false);assert.equal(a.w.document.querySelectorAll('.mlg-month-mini').length,0);
+ a.click('toggle-visibility-button');await new Promise(resolve=>setImmediate(resolve));assert.equal(q('[data-private]').hidden,true);assert.equal(a.w.document.querySelectorAll('.mlg-month-mini').length,12);
+ q('.mlg-annual-table thead button').click();assert.equal(a.w.MLGFinance.getDate(),'2026-01-01');assert.equal(a.w.document.body.classList.contains('mlg-desk'),true);
+});

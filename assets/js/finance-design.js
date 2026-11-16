@@ -28,29 +28,32 @@
   // The chat stays outside scroll containers so it does not disappear on scroll.
   document.body.append($('mlg-ai'));
   const annual=document.createElement('section');annual.id='mlg-annual';annual.setAttribute('aria-label','Visão resumida dos doze meses');
-  annual.innerHTML='<div class="mlg-annual-heading"><div><small>UMA VISÃO DO TODO</small><h2>Seu ano, mês a mês</h2></div><div><button type="button" data-prev aria-label="Ano anterior">‹</button><strong data-year></strong><button type="button" data-next aria-label="Próximo ano">›</button></div><label><input type="checkbox" data-detail> Mostrar lançamentos</label></div><div class="mlg-annual-table"></div><div class="mlg-annual-grid"></div>';
+  annual.innerHTML='<div class="mlg-annual-heading"><h2>Seu ano, mês a mês</h2><div class="mlg-annual-year"><button type="button" data-prev aria-label="Ano anterior">‹</button><strong data-year></strong><button type="button" data-next aria-label="Próximo ano">›</button></div><label class="mlg-annual-metric"><span>Visualizar</span><select data-metric aria-label="Indicador dos doze meses"><option value="saldo">Saldo previsto</option><option value="entradas">Entradas</option><option value="despesas">Saídas</option><option value="pago">Pago</option><option value="pendente">Pendente</option></select></label></div><p class="mlg-annual-private" data-private hidden>Revele os dados pelo ícone de privacidade para visualizar seu ano.</p><div class="mlg-annual-table"></div><div class="mlg-annual-grid"></div><p class="mlg-annual-caption">Valores em reais · Selecione um mês para ver os lançamentos.</p>';
   $('mlg-workspace').after(annual);
   let year=Number(MLGFinance.getDate().slice(0,4));
+  const metrics=[['Entradas','entradas'],['Saídas','despesas'],['Pago','pago'],['Pendente','pendente'],['Saldo previsto','saldo']];
   const money=n=>Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),monthName=m=>new Date(year,m,1).toLocaleDateString('pt-BR',{month:'long'});
+  // Currency is stated once in the caption. Very large amounts retain their full
+  // value in the accessible label/title while using a readable compact display.
+  const number=n=>Math.abs(Number(n))<1000000?Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):Number(n).toLocaleString('pt-BR',{notation:'compact',maximumFractionDigits:1});
+  function openMonth(month){MLGFinance.goTo(`${year}-${String(month+1).padStart(2,'0')}-01`);document.querySelector('[data-view=desk]').click();}
   function render(){
     annual.querySelector('[data-year]').textContent=year;
-    const table=annual.querySelector('.mlg-annual-table'),grid=annual.querySelector('.mlg-annual-grid');table.replaceChildren();grid.replaceChildren();
-    if(MLGFinance.isPrivate()){table.textContent='Revele os dados pelo ícone de privacidade para visualizar seu ano.';return;}
-    const months=MLGFinance.getYear(year),t=document.createElement('table'),thead=t.createTHead(),hr=thead.insertRow();hr.insertCell().textContent='Resumo';
-    months.forEach(m=>{const th=document.createElement('th');th.scope='col';th.textContent=monthName(m.month).slice(0,3);hr.append(th);});
+    const table=annual.querySelector('.mlg-annual-table'),grid=annual.querySelector('.mlg-annual-grid'),privateMessage=annual.querySelector('[data-private]'),isPrivate=MLGFinance.isPrivate();table.replaceChildren();grid.replaceChildren();
+    table.hidden=isPrivate;grid.hidden=isPrivate;privateMessage.hidden=!isPrivate;annual.querySelector('[data-metric]').disabled=isPrivate;
+    if(isPrivate)return;
+    const selectedMetric=annual.querySelector('[data-metric]').value,selectedLabel=metrics.find(([,key])=>key===selectedMetric)[0],months=MLGFinance.getYear(year),t=document.createElement('table'),thead=t.createTHead(),hr=thead.insertRow(),corner=document.createElement('th');corner.scope='col';corner.textContent='Resumo';hr.append(corner);
+    const currentDate=MLGFinance.getDate().split('-').map(Number);
+    months.forEach(m=>{const th=document.createElement('th');th.scope='col';const go=document.createElement('button');go.type='button';go.textContent=monthName(m.month).slice(0,3);go.setAttribute('aria-label','Ver lançamentos de '+monthName(m.month)+' de '+year);go.onclick=()=>openMonth(m.month);th.append(go);if(currentDate[0]===year&&currentDate[1]===m.month+1)th.className='is-current';hr.append(th);});
     const tbody=t.createTBody();
-    [['Entradas','entradas'],['Saídas','despesas'],['Pago','pago'],['Pendente','pendente'],['Saldo previsto','saldo']].forEach(([label,key])=>{const row=tbody.insertRow(),th=document.createElement('th');th.scope='row';th.textContent=label;row.append(th);months.forEach(m=>{const c=row.insertCell();c.textContent=money(m.metrics[key]);c.className=key==='entradas'?'income':key==='despesas'?'expense':'';});});table.append(t);
+    metrics.forEach(([label,key])=>{const row=tbody.insertRow(),th=document.createElement('th');th.scope='row';th.textContent=label;row.append(th);months.forEach(m=>{const c=row.insertCell(),full=money(m.metrics[key]);c.textContent=number(m.metrics[key]);c.title=full;c.setAttribute('aria-label',`${label}, ${monthName(m.month)}: ${full}`);c.className=key==='entradas'?'income':key==='despesas'?'expense':key==='saldo'?'balance':'';});});table.append(t);
     months.forEach(m=>{
-      const card=document.createElement('article');card.className='mlg-month-mini';
-      const go=document.createElement('button');go.type='button';go.className='mlg-month-open';go.textContent=monthName(m.month)+' ↗';go.onclick=()=>{MLGFinance.goTo(`${year}-${String(m.month+1).padStart(2,'0')}-01`);document.querySelector('[data-view=desk]').click();};card.append(go);
-      const totals=document.createElement('div');totals.className='mlg-month-totals';
-      [['Entradas',m.metrics.entradas,'income'],['Saídas',m.metrics.despesas,'expense']].forEach(([label,value,cls])=>{const el=document.createElement('p');el.textContent=label;const strong=document.createElement('strong');strong.className=cls;strong.textContent=money(value);el.append(strong);totals.append(el);});card.append(totals);
-      const paid=document.createElement('p');paid.className='mlg-mini-paid';paid.textContent=`Pago ${money(m.metrics.pago)} · Pendente ${money(m.metrics.pendente)}`;card.append(paid);
-      const list=document.createElement('div');list.className='mlg-mini-items';list.hidden=!annual.querySelector('[data-detail]').checked;
-      ['entradas','despesas'].forEach(type=>{m.data[type].forEach(item=>{const row=document.createElement('div');row.className=item.pago?'is-paid':'';const name=document.createElement('span'),amount=document.createElement('b');name.textContent=(type==='entradas'?'+ ':'− ')+item.nome;amount.textContent=money(item.valor)+(type==='despesas'?(item.pago?' ✓':' · pendente'):'');row.append(name,amount);list.append(row);});});if(!list.childElementCount)list.textContent='Nenhum lançamento.';card.append(list);grid.append(card);
+      const card=document.createElement('article');card.className='mlg-month-mini';if(currentDate[0]===year&&currentDate[1]===m.month+1)card.classList.add('is-current');
+      const go=document.createElement('button');go.type='button';go.className='mlg-month-open';go.setAttribute('aria-label',`${monthName(m.month)} de ${year}, ${selectedLabel}: ${money(m.metrics[selectedMetric])}. Ver lançamentos.`);go.title=money(m.metrics[selectedMetric]);go.onclick=()=>openMonth(m.month);
+      const title=document.createElement('span');title.className='mlg-month-name';title.textContent=monthName(m.month);const value=document.createElement('strong');value.className='mlg-month-value '+(selectedMetric==='entradas'?'income':selectedMetric==='despesas'?'expense':'');value.textContent=number(m.metrics[selectedMetric]);go.append(title,value);card.append(go);grid.append(card);
     });
   }
-  annual.querySelector('[data-prev]').onclick=()=>{year=Math.max(1900,year-1);render();};annual.querySelector('[data-next]').onclick=()=>{year=Math.min(2200,year+1);render();};annual.querySelector('[data-detail]').onchange=render;
+  annual.querySelector('[data-prev]').onclick=()=>{year=Math.max(1900,year-1);render();};annual.querySelector('[data-next]').onclick=()=>{year=Math.min(2200,year+1);render();};annual.querySelector('[data-metric]').onchange=render;
   window.addEventListener('mlg-finance-change',()=>{if(document.body.classList.contains('mlg-year'))render();});window.addEventListener('mlg-view-change',()=>{if(document.body.classList.contains('mlg-year')){year=Number(MLGFinance.getDate().slice(0,4));render();}});render();
  }
  if(window.MLGFinance)init();else window.addEventListener('mlg-finance-ready',init,{once:true});
