@@ -294,3 +294,9 @@ body.mlg-finance #simulation-banner .simulation-banner-actions{display:grid;grid
 body.mlg-finance #simulation-banner .simulation-action-button{display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:32px;padding:6px 5px;font-size:10px;line-height:1.2;border-radius:8px;white-space:normal}
 body.mlg-finance #simulation-banner .simulation-action-button i{font-size:10px;flex-shrink:0}
 body.mlg-finance #mlg-work-ledger .mlg-scroll-list .action-button-add{position:static;width:32px;min-width:32px;height:32px;padding:0!important;align-self:center}
+/* On very short screens, the enclosing ledger can scroll to its controls;
+   the simulation card itself always displays its entire contents. */
+@media(max-height:520px){
+ body.mlg-finance.mlg-desk #mlg-work-ledger>.sheet-panel-despesas:not([hidden]):has(#simulation-banner:not(.hidden)){overflow-y:auto!important;overscroll-behavior:contain}
+ body.mlg-finance.mlg-desk #mlg-work-ledger>.sheet-panel-despesas:has(#simulation-banner:not(.hidden)) #despesas-list-container{flex:0 0 160px;min-height:160px}
+}
