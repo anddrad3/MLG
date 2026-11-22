@@ -3877,7 +3877,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const files = event.target.files;
                 if (files && files.length > 0) {
                     const reader = new FileReader();
-                    reader.onload = (e) => {
+                    reader.onload = async (e) => {
+                        try{if(window.MLGTools)await MLGTools.load('crop');}catch(error){showToast(error.message);return;}
+                        if(document.documentElement.classList.contains('mlg-locked'))return;
                         cropperImage.src = e.target.result;
                         if (cropperInstance) cropperInstance.destroy();
                         cropperInstance = new Cropper(cropperImage, { aspectRatio: 1, viewMode: 1, background: false, responsive: true, restore: true, });
@@ -4185,6 +4187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 importFileName.textContent = file.name;
 
                 try {
+                    if(window.MLGTools)await MLGTools.load('xlsx');
                     const fileBuffer = await file.arrayBuffer();
                     const { importedRows, skippedRows, importedGeneralNotes = [] } = parseSpreadsheetFile(fileBuffer);
                     pendingSpreadsheetImport = {

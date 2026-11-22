@@ -115,3 +115,4 @@ body.mlg-mobile .item-entry-actions button{width:30px;height:32px;min-width:30px
 body.mlg-mobile .item-entry-meta{gap:3px;margin-top:4px}
 body.mlg-mobile .item-entry-meta-chip{font-size:9px!important;padding:1px 3px}
 body.mlg-mobile .item-entry-value{font-size:14px!important}
+.mlg-tool-loading{position:fixed;z-index:99999;top:18px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 32px);padding:12px 20px;border-radius:16px;background:#20252f;color:#fff;box-shadow:0 8px 32px #0004;font:13px/1.5 system-ui}

@@ -12,5 +12,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build:css
+      - run: git diff --exit-code -- assets/css/utilities.css
       - run: npm run check
       - run: npm test

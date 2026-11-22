@@ -31,9 +31,16 @@ Abra http://127.0.0.1:3000. Para desenvolvimento e testes:
 
 ```sh
 npm ci
+npm run build:css
 npm run check
 npm test
 ```
+
+O Financeiro usa CSS compilado localmente. Ao editar classes no HTML/JavaScript,
+execute `npm run build:css` e versione também `assets/css/utilities.css`.
+Planilhas, PDF, gráficos e recorte de imagem são carregados sob demanda; o
+primeiro uso aguarda a ferramenta, com mensagem de carregamento e nova tentativa
+se a conexão falhar.
 
 O site deve ser servido por HTTP local ou HTTPS. Não abra o HTML por `file://`.
 Algumas bibliotecas de interface, fontes e geração de relatórios usam CDNs;
