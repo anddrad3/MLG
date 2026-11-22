@@ -41,7 +41,7 @@
   function nameAvailable(name,id){return !(read()?.profiles||[]).some(p=>p.id!==id&&p.name.toLocaleLowerCase('pt-BR')===name.toLocaleLowerCase('pt-BR'));}
   function avatar(element,p){
     element.replaceChildren();element.classList.add('mlg-avatar');
-    const img=document.createElement('img');img.src=p?.photo||'/assets/logo.png';img.alt='';element.append(img);
+    const img=document.createElement('img');img.src=p?.photo||'/assets/logo.png?v=2';img.alt='';element.append(img);
     if(p?.emoji){const bubble=document.createElement('span');bubble.className='mlg-avatar-emoji';bubble.textContent=p.emoji;element.append(bubble);}
     element.style.setProperty('--presence',MLGProfile.statuses[p?.presence||'online']?.[1]||'#36c990');
   }
@@ -54,7 +54,7 @@
     d.oncancel=e=>{e.preventDefault();if(task.cancellable)finish(false);};
     function render(){
       epoch++;
-      d.innerHTML='<form class="mlg-account-form mlg-auth-card"><a class="mlg-auth-brand" href="/" aria-label="Página inicial MLG"><img src="/assets/logo.png" alt=""><span>Mlg.<small>my life graphs</small></span></a><div class="mlg-auth-content"></div><p data-error role="status" aria-live="polite"></p><div class="mlg-auth-footer">Seu espaço pessoal. Salvo neste navegador.</div></form>';
+      d.innerHTML='<form class="mlg-account-form mlg-auth-card"><a class="mlg-auth-brand" href="/" aria-label="Página inicial MLG"><img src="/assets/logo.png?v=2" alt=""><span>Mlg.<small>my life graphs</small></span></a><div class="mlg-auth-content"></div><p data-error role="status" aria-live="polite"></p><div class="mlg-auth-footer">Seu espaço pessoal. Salvo neste navegador.</div></form>';
       const form=d.querySelector('form'),content=d.querySelector('.mlg-auth-content');
       if(registration){
         content.innerHTML='<div class="mlg-auth-heading"><span class="mlg-auth-eyebrow">UM NOVO COMEÇO · <b data-step>1 / 2</b></span><h1>Seu espaço. Seu ritmo.</h1><p>Crie um perfil com dados separados neste navegador.</p></div><fieldset data-first><label>Nome de usuário<input name="username" autocomplete="username" minlength="2" maxlength="60" required placeholder="Como podemos chamar você?"></label><div data-photo></div></fieldset><fieldset data-second hidden disabled><label>Crie sua senha<input name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Pelo menos 8 caracteres" required></label><label>Confirme a senha<input name="confirm" type="password" autocomplete="new-password" required></label><p class="mlg-password-warning">Não há recuperação de senha. Se esquecer, será preciso excluir este perfil e seus dados para recomeçar. Guarde a senha e exporte backups.</p><label class="mlg-ack"><input name="understood" type="checkbox" required> Entendi e vou guardar minha senha.</label></fieldset><button class="mlg-primary" type="submit">Continuar <span aria-hidden="true">→</span></button><button type="button" data-back class="mlg-auth-link">Já tenho um perfil · Entrar</button>';

@@ -19,7 +19,7 @@
   function photoPicker(container,initial=''){
     container.innerHTML='<button type="button" class="mlg-photo-drop"><img alt="Prévia da foto"><span>Arraste sua foto aqui<br><small>ou clique para escolher e ajustar</small></span></button><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden><button type="button" class="mlg-photo-remove">Remover foto</button><p role="status"></p>';
     let photo=initial;const drop=container.querySelector('.mlg-photo-drop'),input=container.querySelector('input'),img=container.querySelector('img'),status=container.querySelector('[role=status]');
-    const render=()=>{img.src=photo||'/assets/logo.png';container.querySelector('.mlg-photo-remove').hidden=!photo;};
+    const render=()=>{img.src=photo||'/assets/logo.png?v=2';container.querySelector('.mlg-photo-remove').hidden=!photo;};
     const choose=async file=>{try{status.textContent='';const next=await editPhoto(file);if(next)photo=next;render();}catch(e){status.textContent=e.message;}input.value='';};
     drop.onclick=()=>input.click();input.onchange=()=>choose(input.files[0]);drop.ondragover=e=>{e.preventDefault();drop.classList.add('is-over');};drop.ondragleave=()=>drop.classList.remove('is-over');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('is-over');choose(e.dataTransfer.files[0]);};container.querySelector('.mlg-photo-remove').onclick=()=>{photo='';render();};render();return ()=>photo;
   }
