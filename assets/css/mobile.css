@@ -1,0 +1,117 @@
+/* A phone is one focused tool at a time; the desktop canvas stays intact. */
+#mlg-mobile-nav,#mlg-mobile-quick,.mlg-mobile-tool-label{display:none}
+#mlg-mobile-tools:not([open]){display:none}
+body.mlg-mobile{--mlg-annual-bottom:0px;--mobile-nav-space:calc(76px + env(safe-area-inset-bottom));--mobile-bottom-space:calc(144px + env(safe-area-inset-bottom))}
+body.mlg-mobile #main-app-container{height:var(--mobile-height,100dvh)!important;padding:10px 14px var(--mobile-bottom-space)!important}
+body.mlg-mobile #main-app-container>div:first-child{gap:10px}
+body.mlg-mobile .mlg-finance-header,body.mlg-mobile #mlg-desk-tabs{display:none!important}
+body.mlg-mobile .mlg-topline{min-height:42px;gap:10px}
+body.mlg-mobile .mlg-finance-symbol{width:30px;height:36px;font-size:28px}
+body.mlg-mobile .app-brand-title{font-size:19px!important}
+body.mlg-mobile .app-brand-subtitle{font-size:8px!important}
+body.mlg-mobile .mlg-topline .mlg-profile-badge{max-width:48%;min-height:44px}
+body.mlg-mobile .mlg-context-row{min-height:42px;gap:8px}
+body.mlg-mobile .mlg-month-navigation{gap:0!important;min-width:0}
+body.mlg-mobile .mlg-month-navigation .header-button{width:30px!important;height:42px!important;padding:6px!important;min-height:42px}
+body.mlg-mobile #date-display{font-size:17px!important;letter-spacing:-.5px;padding:6px 3px;min-height:42px;display:flex;align-items:center}
+body.mlg-mobile .mlg-money-tools .mlg-box-menu>summary{min-height:42px;padding:8px 10px;font-size:11px;gap:7px}
+body.mlg-mobile #mlg-mobile-nav{position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(560px,calc(100% - 24px));height:60px;z-index:70;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;padding:5px;border:1px solid var(--line);border-radius:24px;background:var(--glass);backdrop-filter:blur(24px);box-shadow:0 6px 24px #00000012}
+body.mlg-mobile #mlg-mobile-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:48px;border-radius:18px;color:var(--muted);font-size:10px;font-weight:500;line-height:1}
+body.mlg-mobile #mlg-mobile-nav i{font-size:18px}
+body.mlg-mobile #mlg-mobile-nav [aria-current=page]{color:var(--accent);background:#007aff10}
+body.mlg-mobile #mlg-ai{bottom:var(--mobile-nav-space)!important;width:min(560px,calc(100% - 24px))}
+body.mlg-mobile #mlg-ai form{padding:6px;min-height:52px;align-items:center}
+body.mlg-mobile #mlg-ai form button{width:38px;height:40px;flex-basis:38px}
+body.mlg-mobile #mlg-ai textarea{font-size:16px!important}
+body.mlg-mobile .mlg-chat-response{max-height:min(260px,40dvh)}
+body.mlg-mobile:not([data-mobile-screen=overview]) #indicators-grid{display:none!important}
+body.mlg-mobile[data-mobile-screen=overview] #mlg-workspace{display:none!important}
+body.mlg-mobile[data-mobile-screen=overview] #indicators-grid{flex:1;min-height:0;max-height:none!important;overflow:hidden!important;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:8px!important;padding:0}
+body.mlg-mobile[data-mobile-screen=overview] #indicators-grid .indicator-card{display:flex;flex-direction:column;justify-content:center;min-height:0;padding:10px 13px!important;border:1px solid var(--line)!important;background:var(--surface)!important;border-radius:17px!important;order:initial}
+body.mlg-mobile[data-mobile-screen=overview] #indicators-grid .indicator-card h3{font-size:11px!important;line-height:1.3}
+body.mlg-mobile[data-mobile-screen=overview] #indicators-grid .indicator-card h3:before{content:none}
+body.mlg-mobile[data-mobile-screen=overview] #indicators-grid .indicator-card p{font-size:clamp(17px,4.6vw,25px)!important;line-height:1.2;margin-top:7px}
+body.mlg-mobile[data-mobile-screen=overview] #indicators-grid .help-button{width:24px;height:24px;padding:4px;min-width:24px}
+body.mlg-mobile[data-mobile-screen=overview] #mlg-mobile-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex-shrink:0}
+body.mlg-mobile #mlg-mobile-quick button{display:flex;justify-content:center;align-items:center;gap:9px;min-height:44px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:15px;font-size:12px;font-weight:550}
+body.mlg-mobile #mlg-mobile-quick [data-add=entradas] i{color:#30ae7b}
+body.mlg-mobile #mlg-mobile-quick [data-add=despesas] i{color:#e87582}
+body.mlg-mobile.mlg-desk #mlg-workspace{min-height:0;padding:0;overflow:clip}
+body.mlg-mobile.mlg-desk #mlg-work-ledger{gap:8px;overflow:clip!important}
+body.mlg-mobile.mlg-desk #mlg-work-ledger>.sheet-panel:not([hidden]){padding:13px!important;min-height:0;height:auto}
+body.mlg-mobile.mlg-desk .mlg-ledger-tabs{padding:4px;border-radius:16px}
+body.mlg-mobile.mlg-desk .mlg-ledger-tabs button{min-height:38px;font-size:13px}
+body.mlg-mobile .sheet-panel-toolbar-button{min-height:34px;font-size:10px}
+body.mlg-mobile .sheet-panel-toolbar-group{gap:4px;flex-wrap:wrap}
+body.mlg-mobile .item-entry-card{padding:12px!important}
+body.mlg-mobile .item-entry-title{font-size:13px!important}
+body.mlg-mobile .item-entry-actions button{min-width:34px;min-height:34px;width:34px;height:34px}
+body.mlg-mobile .item-checkbox{min-width:22px;min-height:22px}
+body.mlg-mobile .item-entry-meta-chip{font-size:10px!important}
+body.mlg-mobile .mlg-column-notes summary{padding:9px 0}
+body.mlg-mobile #mlg-work-notes{padding:16px!important}
+body.mlg-mobile #mlg-work-notes #geral-anotacao{padding:12px!important;font-size:16px!important;line-height:1.65}
+body.mlg-mobile #salvar-anotacao-geral{min-height:36px;padding:7px 10px!important;font-size:11px}
+body.mlg-mobile #calculator-window.is-docked #calculator-header{padding:12px 14px 0}
+body.mlg-mobile #calculator-window.is-docked #calculator-header+div{padding:10px 14px 14px;max-width:520px}
+body.mlg-mobile #calculator-window.is-docked .calculator-display-shell{margin-bottom:8px}
+body.mlg-mobile #calculator-window.is-docked .calc-button{height:clamp(36px,6.6dvh,56px)!important;font-size:22px;border-radius:15px}
+body.mlg-mobile #calculator-window.is-docked #calculator-use-result-button{min-height:40px}
+body.mlg-mobile .mlg-mobile-calc-history{font-size:11px;margin-top:12px;color:var(--muted)}
+body.mlg-mobile .mlg-mobile-calc-history>summary{display:flex;justify-content:space-between;align-items:center;min-height:36px;list-style:none;cursor:pointer}
+body.mlg-mobile .mlg-mobile-calc-history>div{margin-top:0!important;padding-top:8px!important}
+body.mlg-mobile .mlg-mobile-calc-history h3{display:none}
+body.mlg-mobile .mlg-mobile-calc-history #calculator-history{max-height:150px}
+#mlg-mobile-tools{position:fixed;inset:auto 0 calc(12px + env(safe-area-inset-bottom));width:min(520px,calc(100% - 24px));max-width:none;max-height:calc(100dvh - 24px);margin:auto;padding:20px;border:1px solid var(--line);border-radius:28px;background:var(--surface);color:var(--ink);box-shadow:0 18px 80px #0005;overflow:auto;overscroll-behavior:contain;animation:mlg-panel-in .25s ease-out}
+#mlg-mobile-tools::backdrop{background:#080b1255;backdrop-filter:blur(8px)}
+#mlg-mobile-tools>header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+#mlg-mobile-tools header small{font-size:9px;letter-spacing:.13em;color:var(--muted)}
+#mlg-mobile-tools h2{font-size:24px;line-height:1.4;letter-spacing:-.7px;font-weight:600}
+#mlg-mobile-tools [data-close]{width:44px;height:44px;border-radius:50%;font-size:27px;background:var(--surface-soft)}
+.mlg-mobile-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.mlg-mobile-shortcuts button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;min-height:58px;border-radius:15px;background:#007aff0d;color:var(--accent);font-size:12px}
+.mlg-mobile-tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+body.mlg-mobile #mlg-mobile-tools .header-button{display:flex!important;flex-direction:column;width:100%!important;height:70px!important;min-height:48px;gap:9px;padding:8px!important;border:1px solid var(--line);border-radius:16px!important;background:var(--surface-soft);color:var(--ink)}
+#mlg-mobile-tools .header-button .mlg-mobile-tool-label{display:block;white-space:normal;font-size:10px;text-align:center;line-height:1.3}
+html.mlg-locked #mlg-mobile-nav,html.mlg-boot #mlg-mobile-nav{display:none!important}
+body.mlg-mobile.mlg-keyboard-open{--mobile-bottom-space:68px;--mobile-nav-space:calc(8px + var(--mobile-keyboard-offset,0px))}
+body.mlg-mobile.mlg-keyboard-open #mlg-mobile-nav{display:none}
+@media(max-height:650px){
+ body.mlg-mobile #main-app-container{padding-top:6px!important}
+ body.mlg-mobile #main-app-container>div:first-child{gap:6px}
+ body.mlg-mobile[data-mobile-screen=overview] #indicators-grid{gap:5px!important}
+ body.mlg-mobile[data-mobile-screen=overview] #indicators-grid .indicator-card{padding:5px 10px!important;border-radius:13px!important}
+ body.mlg-mobile[data-mobile-screen=overview] #indicators-grid .indicator-card h3{font-size:10px!important}
+ body.mlg-mobile[data-mobile-screen=overview] #indicators-grid .indicator-card p{font-size:17px!important;margin-top:1px}
+ body.mlg-mobile #mlg-mobile-tools .header-button{height:59px!important;gap:6px}
+ body.mlg-mobile #mlg-mobile-tools{padding:14px}
+ body.mlg-mobile #mlg-mobile-tools>header{margin-bottom:10px}
+ body.mlg-mobile #calculator-window.is-docked .calc-button{height:36px!important}
+}
+@media(max-height:500px) and (pointer:coarse){
+ body.mlg-mobile{--mobile-bottom-space:calc(120px + env(safe-area-inset-bottom));--mobile-nav-space:calc(62px + env(safe-area-inset-bottom))}
+ body.mlg-mobile #mlg-mobile-nav{height:48px;border-radius:18px;padding:3px}
+ body.mlg-mobile #mlg-mobile-nav button{flex-direction:row;min-height:40px;gap:7px}
+ body.mlg-mobile .mlg-topline{min-height:32px}
+ body.mlg-mobile .mlg-context-row{position:absolute;top:6px;left:40%;right:16%;min-height:32px}
+ body.mlg-mobile .app-brand-subtitle{display:none}
+ body.mlg-mobile .mlg-money-tools{display:none}
+ body.mlg-mobile[data-mobile-screen=overview] #indicators-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}
+ body.mlg-mobile #mlg-mobile-tools .header-button{height:46px!important;flex-direction:row;gap:7px}
+ body.mlg-mobile #mlg-mobile-tools>header{margin-bottom:4px}
+ body.mlg-mobile .mlg-mobile-shortcuts{margin-bottom:8px}
+ body.mlg-mobile .mlg-mobile-shortcuts button{min-height:40px}
+}
+/* Give the description and value most of the width, even on a 320px phone. */
+body.mlg-mobile .item-entry-card{display:grid!important;grid-template-columns:24px minmax(0,1fr) 30px;column-gap:8px!important;row-gap:5px;padding:10px!important;align-items:start}
+body.mlg-mobile .item-entry-card>*{margin:0!important}
+body.mlg-mobile .item-entry-card>.item-checkbox{grid-column:1;grid-row:1;margin-top:3px!important}
+body.mlg-mobile .item-entry-card>.item-status-icon{grid-column:1;grid-row:2;width:24px;height:30px;font-size:13px}
+body.mlg-mobile .item-entry-card>[data-action=view-image]{grid-column:3;grid-row:1;width:30px;height:30px;font-size:15px}
+body.mlg-mobile .item-entry-card>.item-entry-main{grid-column:2;grid-row:1/4;display:flex!important;flex-direction:column;gap:4px!important;min-width:0}
+body.mlg-mobile .item-entry-main>.text-right{display:flex;align-items:center;justify-content:space-between;width:100%;gap:4px}
+body.mlg-mobile .item-entry-actions{display:flex;margin-top:0!important;gap:0}
+body.mlg-mobile .item-entry-actions button{width:30px;height:32px;min-width:30px;min-height:32px}
+body.mlg-mobile .item-entry-meta{gap:3px;margin-top:4px}
+body.mlg-mobile .item-entry-meta-chip{font-size:9px!important;padding:1px 3px}
+body.mlg-mobile .item-entry-value{font-size:14px!important}

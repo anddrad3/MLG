@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
             await MLGAccount.ready;
+      const appStorage=window.MLGStorage||localStorage;
             if (!await MLGAccount.unlock()) { location.href = '/'; return; }
             let isLoading = true, historyBaseline = null, historySignature = '', pendingPaymentSnapshot = null;
             let realUndoStack = [];
@@ -2290,6 +2291,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             secondaryKeypad.addEventListener('click', (event) => { const button = event.target.closest('.keypad-button'); if (!button || !button.dataset.key) return; const key = button.dataset.key; if (/\d/.test(key)) handleSecondaryDigitInput(key); else if (key === 'backspace') handleSecondaryClear(); });
 
              // --- LISTENERS GLOBAIS ---
+            function clearItemSelection(){document.querySelectorAll('.item-entry-card.is-selected').forEach(el=>{el.classList.remove('is-selected');el.setAttribute('aria-selected','false');});}
+            document.addEventListener('contextmenu',event=>{if(!event.target.closest('.item-entry-card')&&document.querySelector('.item-entry-card.is-selected')){clearItemSelection();event.preventDefault();}});
             document.addEventListener('keydown', (event) => {
                 if(document.querySelector('dialog[open]')||document.documentElement.classList.contains('mlg-locked'))return;
                 if(event.key==='Delete'&&!modalStack.length&&!event.target.closest('input,textarea,select,[contenteditable]')){const selected=document.querySelector('.item-entry-card.is-selected');if(selected&&!isEditLocked){event.preventDefault();selected.querySelector('[data-action="delete"]')?.click();}return;}
@@ -2298,6 +2301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     event.preventDefault(); if (!isEditLocked) {pendingPaymentSnapshot = null; undoLastAction();} return;
                 }
                 if (event.key === 'Escape') {
+                    clearItemSelection();
                     if (modalStack.length > 0) closeTopModal();
                 } else if (modalStack.some(m => m.element === secondaryPinWrapper)) {
                     if (event.key >= '0' && event.key <= '9') handleSecondaryDigitInput(event.key);
@@ -6650,7 +6654,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 dialog.oncancel=e=>{e.preventDefault();close();};
                 form.onsubmit=e=>{
                     e.preventDefault();if(field.value!=='APAGAR FINANCEIRO')return;
-                    try{localStorage.removeItem('financialControlState');}catch{dialog.querySelector('[role=status]').textContent='Não foi possível acessar o armazenamento. Nada foi alterado.';return;}
+                    try{appStorage.removeItem('financialControlState');}catch{dialog.querySelector('[role=status]').textContent='Não foi possível acessar o armazenamento. Nada foi alterado.';return;}
                     while(modalStack.length)closeTopModal();
                     simulationState={active:false,snapshot:null,startedAt:null,triggerExpenseId:null,triggerMonthKey:null};
                     financialData={};caixinhas=[];trash=[];recurringSeries=[];editLockRanges=[];isEditLocked=false;
@@ -6662,6 +6666,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     window.dispatchEvent(new Event('mlg-finance-reset'));showToast('Todos os dados financeiros foram apagados deste navegador.');
                 };
                 document.body.append(dialog);dialog.showModal();
+            });
+
+            document.getElementById('download-model-workbook-btn').addEventListener('click',async event=>{
+                const button=event.currentTarget;button.disabled=true;
+                try{if(!window.ExcelJS)throw Error('Planilha indisponível');const year=new Date().getFullYear();await downloadExcelJsWorkbook(MLGModelWorkbook.build(ExcelJS,year),MLGModelWorkbook.filename(year));showToast('Modelo fictício baixado. Seus dados não foram alterados.');}
+                catch{showToast('Não foi possível baixar o modelo. Recarregue o site e tente novamente.');}
+                finally{button.disabled=false;}
             });
 
             document.getElementById('export-family-andrade-btn').addEventListener('click', (event) => {
@@ -7220,7 +7231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     simulationState
                 };
                 try {
-                    localStorage.setItem('financialControlState', JSON.stringify(state));
+                    appStorage.setItem('financialControlState', JSON.stringify(state));
                 } catch (error) {
                     console.error('Não foi possível salvar o estado.');
                     if (!savingErrorShown) { showToast('Armazenamento cheio ou indisponível. Exporte uma cópia antes de fechar.'); savingErrorShown = true; }
@@ -7228,7 +7239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             function loadState() {
-                const savedState = localStorage.getItem('financialControlState');
+                const savedState = appStorage.getItem('financialControlState');
                 if (savedState) {
                     let state = null;
                     try {
@@ -7247,7 +7258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
 
-                    state.theme=localStorage.getItem('theme')||state.theme||'dark';
+                    state.theme=appStorage.getItem('theme')||state.theme||'dark';
                     if(state.theme === 'dark') document.documentElement.classList.add('dark');
                     else document.documentElement.classList.remove('dark');
                     updateThemeIcons(state.theme === 'dark');

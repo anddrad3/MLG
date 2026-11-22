@@ -132,7 +132,7 @@ test('calculator keyboard and paid sorting work without paginated lists',async t
 test('private reference imports exact counts without totals, placeholders or repeated rows',{skip:!process.env.MLG_REFERENCE_WORKBOOK},async t=>{
  const a=await app(t),workbook=XLSX.read(fs.readFileSync(process.env.MLG_REFERENCE_WORKBOOK));
  await importWorkbook(a,workbook);await importWorkbook(a,workbook);
- const months=Object.values(a.state().financialData);assert.equal(months.reduce((n,m)=>n+m.entradas.length,0),271);assert.equal(months.reduce((n,m)=>n+m.despesas.length,0),1460);assert.equal(a.w.MLGFinance.exportNotes().length-1,37);
+ const months=Object.values(a.state().financialData);assert.equal(months.reduce((n,m)=>n+m.entradas.length,0),271);assert.equal(months.reduce((n,m)=>n+m.despesas.length,0),1454);assert.equal(a.w.MLGFinance.exportNotes().length-1,37);
 });
 test('currency input retains Brazilian cents across repeated blur',async t=>{
   const a=await app(t),field=a.$('sobras-cofre-input');field.value='1.234,56';
@@ -160,7 +160,7 @@ test('clear all requires exact confirmation, preserves profile and cannot restor
  const b=await app(t,a.state());assert.equal(b.$('geral-anotacao').value,'');assert.equal(b.w.MLGFinance.exportRows().length,1);
 });
 test('workspace keeps one notes editor and calculator keyboard does not consume typing in notes',async t=>{
- const a=await app(t);a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));
+ const a=await app(t);a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));a.w.document.querySelector('[data-view=desk]').click();
  assert.equal(a.w.document.querySelectorAll('#geral-anotacao').length,1);assert.equal(a.$('calculator-window').parentElement.id,'mlg-work-calculator');assert.equal(a.w.document.body.classList.contains('modal-open'),false);
  const note=a.$('geral-anotacao');note.value='Planejamento';note.dispatchEvent(new a.w.Event('input'));note.focus();const key=new a.w.KeyboardEvent('keydown',{key:'9',bubbles:true,cancelable:true});note.dispatchEvent(key);assert.equal(key.defaultPrevented,false);
  const number=a.$('calculator-window').querySelector('[data-key="2"]');number.focus();for(const key of ['2','+','3','Enter'])number.dispatchEvent(new a.w.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true}));assert.equal(a.$('calculator-display').textContent,'5');
@@ -212,7 +212,7 @@ test('floating chat opens results and keeps unconfirmed changes visible without 
 test('desk ledger tabs retain transactions and notes and reveal searched items',async t=>{
  const a=await app(t);a.w.MLGFinance.addCommand(command('entradas',1000));a.w.MLGFinance.addCommand(command('despesas',100));
  a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));
- const q=s=>a.w.document.querySelector(s),income=a.$('mlg-ledger-entradas'),expenses=a.$('mlg-ledger-despesas');
+ const q=s=>a.w.document.querySelector(s),income=a.$('mlg-ledger-entradas'),expenses=a.$('mlg-ledger-despesas');q('[data-view=desk]').click();
  assert.equal(income.hidden,true);assert.equal(expenses.hidden,false);
  const incomeNote=a.$('entradas-anotacao');incomeNote.value='Nota mantida';incomeNote.dispatchEvent(new a.w.Event('input'));
  q('[data-ledger=entradas]').click();assert.equal(income.hidden,false);assert.equal(expenses.hidden,true);income.querySelector('.item-entry-card').click();
@@ -227,18 +227,36 @@ test('desk ledger tabs retain transactions and notes and reveal searched items',
  a.click('simulation-end-btn');assert.equal(a.state().financialData['2026-10'].entradas.length,1);
 });
 
-test('compact annual view compares all twelve months, changes metrics and preserves privacy and navigation',async t=>{
- const a=await app(t);a.w.MLGFinance.addCommand(command('entradas',1200));a.w.MLGFinance.addCommand(command('despesas',75));
+test('restored annual overview keeps the table, twelve complete month cards and paged details without dropping transactions',async t=>{
+ const a=await app(t);a.w.MLGFinance.addCommand(command('entradas',1200));a.w.MLGFinance.addCommand(command('despesas',75));a.w.MLGFinance.addCommand({...command('despesas',25),name:'Última conta do mês'});
  a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));a.w.eval(fs.readFileSync('assets/js/finance-design.js','utf8'));
  const q=s=>a.w.document.querySelector(s);q('[data-view=year]').click();
  assert.equal(q('.mlg-annual-table').querySelectorAll('tbody tr').length,5);
  assert.equal(q('.mlg-annual-table').querySelectorAll('tbody td').length,60);
- const metric=q('[data-metric]');metric.value='despesas';metric.dispatchEvent(new a.w.Event('change'));
  assert.equal(a.w.document.querySelectorAll('.mlg-month-mini').length,12);
- assert.equal(a.w.document.querySelectorAll('.mlg-month-value')[10].textContent,'75,00');
- assert.match(a.w.document.querySelectorAll('.mlg-month-open')[10].getAttribute('aria-label'),/Saídas/);
+ let november=a.w.document.querySelectorAll('.mlg-month-mini')[10];
+ assert.match(november.querySelector('.mlg-month-totals').textContent,/EntradasR\$\s*1.200,00SaídasR\$\s*100,00/);
+ assert.match(november.querySelector('.mlg-mini-paid').textContent,/Pago.*Pendente/);
+ assert.equal(november.querySelector('.mlg-mini-items').hidden,true);assert.equal(q('[data-metric]'),null);
+ const details=q('[data-detail]');details.checked=true;details.dispatchEvent(new a.w.Event('change'));
+ november=a.w.document.querySelectorAll('.mlg-month-mini')[10];assert.equal(november.querySelector('.mlg-mini-items').hidden,false);
+ assert.match(november.querySelector('.mlg-mini-item').textContent,/Receita teste/);
+ november.querySelector('.mlg-mini-pages button:last-child').click();assert.match(november.querySelector('.mlg-mini-item').textContent,/Conta teste/);
+ november.querySelector('.mlg-mini-pages button:last-child').click();assert.match(november.querySelector('.mlg-mini-item').textContent,/Última conta do mês/);assert.equal(november.querySelector('.mlg-mini-pages span').textContent,'3 / 3');assert.equal(november.querySelector('.mlg-mini-pages button:last-child').disabled,true);
+ november.querySelector('.mlg-mini-pages button:first-child').click();assert.equal(november.querySelector('.mlg-mini-pages span').textContent,'2 / 3');
  q('[data-prev]').click();assert.equal(q('[data-year]').textContent,'2025');q('[data-next]').click();assert.equal(q('[data-year]').textContent,'2026');
  a.click('toggle-visibility-button');assert.equal(q('[data-private]').hidden,false);assert.equal(a.w.document.querySelectorAll('.mlg-month-mini').length,0);
  a.click('toggle-visibility-button');await new Promise(resolve=>setImmediate(resolve));assert.equal(q('[data-private]').hidden,true);assert.equal(a.w.document.querySelectorAll('.mlg-month-mini').length,12);
  q('.mlg-annual-table thead button').click();assert.equal(a.w.MLGFinance.getDate(),'2026-01-01');assert.equal(a.w.document.body.classList.contains('mlg-desk'),true);
+});
+
+
+test('selection clears with Escape or right click outside and opening finance defaults to overview',async t=>{
+ const a=await app(t);a.w.MLGFinance.addCommand(command('despesas',25));
+ const card=a.w.document.querySelector('.item-entry-card');card.click();assert.equal(card.getAttribute('aria-selected'),'true');
+ card.dispatchEvent(new a.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(card.classList.contains('is-selected'),false);
+ card.click();card.dispatchEvent(new a.w.MouseEvent('contextmenu',{bubbles:true}));assert.equal(card.classList.contains('is-selected'),true);
+ a.w.document.body.dispatchEvent(new a.w.MouseEvent('contextmenu',{bubbles:true,cancelable:true}));assert.equal(card.getAttribute('aria-selected'),'false');
+ a.w.localStorage.setItem('mlg.financeView','desk');a.w.eval(fs.readFileSync('assets/js/workspace.js','utf8'));
+ assert.equal(a.w.document.querySelector('[data-view=overview]').getAttribute('aria-pressed'),'true');assert.equal(a.w.document.body.classList.contains('mlg-desk'),false);
 });

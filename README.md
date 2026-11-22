@@ -10,9 +10,10 @@ O Financeiro usa uma tela fixa, sem rolagem da página. Listas, notas, históric
 e janelas extensas rolam apenas dentro dos próprios painéis, sem barras visíveis.
 A **Mesa de trabalho** reúne contas, notas e calculadora no computador. A coluna
 de contas alterna entre Entradas e Despesas, usando toda a altura disponível.
-Em telas estreitas, abas alternam os mesmos painéis sem duplicar nem perder seus
-dados. A visão anual exibe os 12 meses sem rolagem: matriz no computador e
-cartões com seletor de indicador em telas menores. Selecione um mês para abrir
+No celular, a navegação inferior reúne Resumo, Contas, Notas, Calculadora e Mais.
+Os mesmos editores e ferramentas são preservados ao mudar de tela. A visão anual
+reúne tabela e 12 cartões com entradas, saídas, pagos e pendentes, sem rolagem.
+A opção Mostrar lançamentos permite paginar os itens de cada mês. Selecione um mês para abrir
 seus lançamentos. O card de simulação mantém todas as ações sem rolagem própria.
 A IA permanece em uma cápsula flutuante: respostas se expandem acima dela,
 sem reservar um rodapé. Confirmações ficam abertas até confirmar ou cancelar.
@@ -54,9 +55,19 @@ ExcelJS 4.4.0, incluído no mesmo diretório com licença MIT.
 
 ## Perfil, dados locais e simulação
 
-As finanças e anotações são salvas em `localStorage`, usando a chave existente
-`financialControlState`. O perfil usa `mlg.account.v1`. Não existe sincronização
-entre dispositivos. Limpar os dados do site apaga o armazenamento local.
+É possível cadastrar vários perfis locais, com foto, emoji e mensagem de status.
+O registro `mlg.accounts.v2` guarda os perfis; finanças, notas e preferências de
+novos perfis usam o prefixo `mlg.user.<id>.`. O perfil original mantém suas chaves
+existentes, sem copiar nem apagar seu histórico. Excluir ou exportar um perfil
+afeta apenas seus próprios dados. Não existe sincronização entre dispositivos.
+Limpar os dados do site apaga todos os perfis locais.
+
+O Financeiro sempre pede senha ao entrar e abre em Visão geral. Sair da aba
+bloqueia imediatamente o acesso, além do bloqueio por inatividade. A senha não
+tem recuperação: a tela explica como excluir apenas o perfil esquecido.
+
+Em Configurações, **Baixar planilha modelo** gera dois anos completos no modelo
+Andrade, somente com dados fictícios. O download não modifica as finanças atuais.
 
 O perfil oferece foto com arrastar e soltar, recorte, zoom, status e troca de
 nome/senha sem apagar finanças. O bloqueio por inatividade é configurável de

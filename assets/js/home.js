@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
       await MLGAccount.ready;
+      const appStorage=window.MLGStorage||localStorage;
       const elements = {
         screenWrapper: document.getElementById('screen-wrapper'),
         appGrid: document.getElementById('app-grid'),
@@ -69,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         autocompleteResults: document.getElementById('autocomplete-results'),
       };
 
-      const state = { isEditMode:false, isAppDragging:false, theme:localStorage.getItem('theme')||'dark', draggedEl:null, dragGhost:null, dragOffset:{x:0,y:0}, activeGrid:null, dragOverEl:null, cropper:null, isUploading:false, confirmCallback:null };
+      const state = { isEditMode:false, isAppDragging:false, theme:appStorage.getItem('theme')||'dark', draggedEl:null, dragGhost:null, dragOffset:{x:0,y:0}, activeGrid:null, dragOverEl:null, cropper:null, isUploading:false, confirmCallback:null };
       const LONG_PRESS_DURATION = 600;
       const DEFAULT_PROFILE_PIC = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2EwYTBhMCI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg==';
 
@@ -158,6 +159,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>`;
           elements.pageContentWrapper.insertAdjacentHTML('afterbegin', headerHTML);
           elements.profilePicContainer = document.getElementById('profile-pic-container');
+          if(MLGAccount.profile.emoji){const emoji=document.createElement('span');emoji.className='mlg-avatar-emoji';emoji.textContent=MLGAccount.profile.emoji;elements.profilePicContainer.append(emoji);}
+          if(MLGAccount.profile.message){const message=document.createElement('p');message.className='mlg-status-message';message.textContent=MLGAccount.profile.message;document.querySelector('.profile-info').append(message);}
           elements.friendsBtn = document.getElementById('friends-btn');
           elements.profileBioContainer = document.getElementById('profile-bio-container');
           elements.profileBioText = document.getElementById('profile-bio-text');
@@ -312,15 +315,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.bioEditModal.classList.remove('visible');
             elements.bioEditModal.setAttribute('aria-hidden', 'true');
         },
-        updateBio() {
+        async updateBio() {
             const newBio = elements.bioTextarea.value.trim();
             if (newBio.length > 150) {
                 actions.showToast('Sua bio não pode exceder 150 caracteres.', 'error');
                 return;
             }
+            try{await MLGAccount.updateProfile({bio:newBio});}catch(error){actions.showToast(error.message,'error');return;}
             userProfile.bio = newBio || 'Adicione uma bio para se apresentar.';
             elements.profileBioText.textContent = userProfile.bio;
-            localStorage.setItem('userBio', userProfile.bio);
+            appStorage.setItem('userBio', userProfile.bio);
             actions.closeBioEditModal();
             actions.showToast('Bio atualizada com sucesso!', 'success');
         },
@@ -419,7 +423,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             setTimeout(() => { document.body.style.opacity = 0; setTimeout(() => window.location.reload(), 500); }, 1000);
         },
         updateProfilePicture(newSrc){
-          if(newSrc === DEFAULT_PROFILE_PIC) { localStorage.removeItem('profilePicData'); MLGAccount.updatePhoto(''); } else { localStorage.setItem('profilePicData', newSrc); MLGAccount.updatePhoto(newSrc); }
+          if(newSrc === DEFAULT_PROFILE_PIC) { appStorage.removeItem('profilePicData'); MLGAccount.updatePhoto(''); } else { appStorage.setItem('profilePicData', newSrc); MLGAccount.updatePhoto(newSrc); }
           userProfile.profilePic = newSrc;
           const headerImg = elements.profilePicContainer?.querySelector('.profile-picture');
           if (headerImg) headerImg.src = newSrc;
@@ -465,16 +469,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         enterEditMode(){ if (state.isAppDragging) return; state.isEditMode = true; document.querySelectorAll('.app-grid').forEach(grid => grid.classList.add('edit-mode')); actions.showToast('Modo de edição ativo', 'info'); },
         exitEditMode(){ if (!state.isEditMode) return; state.isEditMode = false; document.querySelectorAll('.app-grid').forEach(grid => grid.classList.remove('edit-mode')); },
         async openApp(appId){
-          if (appId === 'financeiro') { if (await MLGAccount.unlock()) location.href='/financeiro/index.html'; return; }
+          if (appId === 'financeiro') { location.href='/financeiro/index.html'; return; }
           const app = homeApps.find(a => a.id === appId) || trashApps.find(a => a.id === appId); if (!app) return;
           if (app.id === 'settings') { actions.openSettingsModal(); return; }
           elements.appTitle.textContent = app.name;
-          if(app.id==='notas'){elements.appContentArea.innerHTML='<section class="mlg-notes"><h2>Suas notas</h2><p>Salvas automaticamente neste navegador.</p><textarea aria-label="Minhas notas" placeholder="Escreva aqui…"></textarea><small role="status"></small></section>';const note=elements.appContentArea.querySelector('textarea');note.value=localStorage.getItem('mlg.notes.v1')||'';note.oninput=()=>{try{localStorage.setItem('mlg.notes.v1',note.value);elements.appContentArea.querySelector('[role=status]').textContent='Salvo';}catch{elements.appContentArea.querySelector('[role=status]').textContent='Armazenamento cheio. Baixe um backup.';}};}else if (app.id === 'trash') render.trashContent(); else elements.appContentArea.innerHTML = app.content;
+          if(app.id==='notas'){elements.appContentArea.innerHTML='<section class="mlg-notes"><h2>Suas notas</h2><p>Salvas automaticamente neste navegador.</p><textarea aria-label="Minhas notas" placeholder="Escreva aqui…"></textarea><small role="status"></small></section>';const note=elements.appContentArea.querySelector('textarea');note.value=appStorage.getItem('mlg.notes.v1')||'';note.oninput=()=>{try{appStorage.setItem('mlg.notes.v1',note.value);elements.appContentArea.querySelector('[role=status]').textContent='Salvo';}catch{elements.appContentArea.querySelector('[role=status]').textContent='Armazenamento cheio. Baixe um backup.';}};}else if (app.id === 'trash') render.trashContent(); else elements.appContentArea.innerHTML = app.content;
           elements.appView.classList.add('visible'); elements.appView.setAttribute('aria-hidden','false'); elements.closeAppBtn.focus();
           lucide.createIcons();
         },
         closeApp(){ elements.appView.classList.remove('visible'); elements.appView.setAttribute('aria-hidden','true'); },
-        toggleTheme(){ const isNowLight = !document.documentElement.classList.contains('light'); document.documentElement.classList.toggle('light', isNowLight); state.theme = isNowLight ? 'light' : 'dark'; elements.themeSwitch.checked = isNowLight; localStorage.setItem('theme', state.theme); },
+        toggleTheme(){ const isNowLight = !document.documentElement.classList.contains('light'); document.documentElement.classList.toggle('light', isNowLight); state.theme = isNowLight ? 'light' : 'dark'; elements.themeSwitch.checked = isNowLight; appStorage.setItem('theme', state.theme); },
         showToast(message, type = 'info'){
           const existing = document.querySelector('.toast'); if (existing) existing.remove();
           const toast = document.createElement('div'); toast.className = `toast fixed top-5 left-1/2 -translate-x-1/2 z-[1001] px-4 py-2 rounded-lg text-base font-medium shadow-lg transition-all duration-300 transform -translate-y-20 opacity-0`;
@@ -663,8 +667,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       };
 
-      const loadPersistedProfilePic = () => { const saved = localStorage.getItem('profilePicData'); if (!saved) { userProfile.profilePic = DEFAULT_PROFILE_PIC; } else { userProfile.profilePic = saved; } };
-      const loadPersistedBio = () => { const saved = localStorage.getItem('userBio'); if(saved) userProfile.bio = saved; };
+      const loadPersistedProfilePic = () => { const saved = MLGAccount.profile.photo||appStorage.getItem('profilePicData'); if (!saved) { userProfile.profilePic = DEFAULT_PROFILE_PIC; } else { userProfile.profilePic = saved; } };
+      const loadPersistedBio = () => { const saved = MLGAccount.profile.bio??appStorage.getItem('userBio'); if(saved) userProfile.bio = saved; };
       const init = () => {
         try{
           initTheme(); loadPersistedProfilePic(); loadPersistedBio();
